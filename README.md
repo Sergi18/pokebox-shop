@@ -1,8 +1,8 @@
-# PokeBox Shop 🎁
+# PokeBox Shop
 
 Una plataforma completa para comprar, abrir y comerciar con cajas de Pokémon. Incluye un sistema de pagos integrado, autenticación de usuarios y un entorno interactivo para coleccionar.
 
-## 📋 Descripción del Proyecto
+## Descripción del Proyecto
 
 PokeBox Shop es una aplicación fullstack que permite a los usuarios:
 
@@ -15,7 +15,7 @@ PokeBox Shop es una aplicación fullstack que permite a los usuarios:
 - **Pagos seguros** integrados con Stripe
 - **Entregas** de objetos digitales
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 ### Backend
 - **Node.js** con Express.js
