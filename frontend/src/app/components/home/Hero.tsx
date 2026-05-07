@@ -57,11 +57,11 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="flex flex-wrap justify-center gap-4 mb-16"
           >
-            <Button variant="primary" size="lg" onClick={() => navigate('/cases')}>
+            <Button variant="default" size="lg" onClick={() => navigate('/cases')}>
               <Sparkles className="w-5 h-5" />
               Open Cases Now
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => navigate('/battles')}>
+            <Button variant="outline" size="lg" onClick={() => navigate('/battles')}>
               <TrendingUp className="w-5 h-5" />
               Join Battle
             </Button>

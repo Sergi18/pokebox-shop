@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: var(--neon-blue);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--dark-hover);
+  --color-secondary-foreground: #ffffff;
+  --color-accent: var(--neon-yellow);
+  --color-accent-foreground: #000000;
+  --color-destructive: var(--neon-red);
+  --color-destructive-foreground: #ffffff;
+  --color-card: var(--dark-card);
+  --color-card-foreground: #ffffff;
+  --color-background: var(--dark-bg);
+  --color-foreground: #ffffff;
+  --color-border: #1a1f3a;
+  --color-input: #1a1f3a;
+  --color-ring: var(--neon-blue);
+}
+
 :root {
   --neon-yellow: #ffd700;
   --neon-red: #ff3e3e;
@@ -8,6 +26,7 @@
   --dark-bg: #0a0e27;
   --dark-card: #131829;
   --dark-hover: #1a1f3a;
+  --radius: 0.5rem;
 }
 
 body {

@@ -134,7 +134,7 @@ export function FeaturedCases() {
                   </div>
                   <Button 
                     size="sm" 
-                    variant="primary"
+                    variant="default"
                     className="w-full mt-4"
                     onClick={(e) => {
                       e.stopPropagation();

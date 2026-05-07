@@ -5,9 +5,9 @@
   "description": "PokeBox Platform Backend API",
   "private": true,
   "scripts": {
-    "dev": "node src/index.js",
-    "build": "echo 'Backend build'",
-    "start": "node src/index.js"
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "keywords": ["pokebox", "api"],
   "author": "",
