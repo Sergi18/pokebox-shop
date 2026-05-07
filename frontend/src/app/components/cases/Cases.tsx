@@ -154,13 +154,13 @@ export function Cases() {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-[var(--neon-yellow)]">{caseItem.price} Credits</span>
+                      <span className="text-[var(--neon-yellow)]">{caseItem.price} PokéCoins</span>
                     </div>
                   </div>
                 </div>
                 <Button 
                   size="sm" 
-                  variant="primary"
+                  variant="default"
                   className="w-full mt-4"
                   onClick={(e) => {
                     e.stopPropagation();

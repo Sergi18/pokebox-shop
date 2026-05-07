@@ -200,7 +200,7 @@ export function Trade() {
             <ArrowLeftRight className="w-16 h-16 mx-auto mb-4 text-gray-600" />
             <h2 className="mb-4">Inicia sesión para intercambiar</h2>
             <p className="text-gray-400 mb-6">Necesitas una cuenta para usar el sistema de intercambio.</p>
-            <Button variant="primary" onClick={() => (window.location.href = '/login')}>
+            <Button variant="default" onClick={() => (window.location.href = '/login')}>
               Iniciar Sesión
             </Button>
           </div>
@@ -292,11 +292,11 @@ export function Trade() {
                 </div>
               </div>
               <div className="flex gap-4">
-                <Button variant="primary" onClick={handleReset}>
+                <Button variant="default" onClick={handleReset}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Nuevo Intercambio
                 </Button>
-                <Button variant="secondary" onClick={() => (window.location.href = '/inventory')}>
+                <Button variant="outline" onClick={() => (window.location.href = '/inventory')}>
                   Ver Inventario
                 </Button>
               </div>
@@ -358,11 +358,11 @@ export function Trade() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="secondary" className="flex-1" onClick={() => setStep('select-receive')}>
+                  <Button variant="outline" className="flex-1" onClick={() => setStep('select-receive')}>
                     Atrás
                   </Button>
                   <Button
-                    variant="primary"
+                    variant="default"
                     className="flex-1"
                     onClick={handleTrade}
                     disabled={trading}
@@ -453,7 +453,7 @@ export function Trade() {
                         ? 'No se encontraron cartas con ese filtro.'
                         : '¡Abre algunas cajas para obtener cartas!'}
                     </p>
-                    <Button variant="primary" onClick={() => (window.location.href = '/cases')}>
+                    <Button variant="default" onClick={() => (window.location.href = '/cases')}>
                       Abrir Cajas
                     </Button>
                   </div>
@@ -630,7 +630,7 @@ export function Trade() {
                           {isSelected && (
                             <div className="mt-2">
                               <Button
-                                variant="primary"
+                                variant="default"
                                 className="w-full text-xs py-1.5"
                                 onClick={(e) => {
                                   e.stopPropagation();

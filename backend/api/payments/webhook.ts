@@ -1,4 +1,5 @@
 import stripe from '../../lib/stripe';
+import pool from '../../lib/db';
 
 // POST /api/payments/webhook
 export async function handleStripeWebhook(body: string, signature: string) {
@@ -20,12 +21,6 @@ export async function handleStripeWebhook(body: string, signature: string) {
     case 'checkout.session.completed':
       return await handlePaymentSuccess(event.data.object as any);
 
-    case 'payment_intent.payment_failed':
-      return await handlePaymentFailed(event.data.object as any);
-
-    case 'charge.refunded':
-      return await handleRefund(event.data.object as any);
-
     default:
       console.log(`Unhandled event type: ${event.type}`);
       return { received: true };
@@ -33,70 +28,48 @@ export async function handleStripeWebhook(body: string, signature: string) {
 }
 
 async function handlePaymentSuccess(session: any) {
+  const client = await pool.connect();
   try {
     const { userId, packageId, pokecoins } = session.metadata;
+    const amount = session.amount_total / 100; // Stripe lo envía en centavos
 
-    console.log(`Payment successful for user ${userId}`);
-    console.log(`Granting ${pokecoins} pokecoins from package ${packageId}`);
+    console.log(`Payment successful for user ${userId}: ${amount} USD -> ${pokecoins} PokéCoins`);
 
-    // TODO: Implementar lógica para:
-    // 1. Verificar usuario
-    // 2. Agregar pokecoins a la cuenta
-    // 3. Guardar transacción en BD
-    // 4. Enviar confirmación por email
+    await client.query('BEGIN');
 
-    return {
-      success: true,
-      message: 'PokéCoins granted successfully',
-      userId,
-      pokecoins,
-    };
+    // 1. Actualizar balance en wallet
+    const updateWalletQuery = `
+      UPDATE public.wallets 
+      SET balance = balance + $1, 
+          total_deposited = total_deposited + $2,
+          updated_at = NOW()
+      WHERE user_id = $3
+    `;
+    await client.query(updateWalletQuery, [pokecoins, amount, userId]);
+
+    // 2. Registrar transacción
+    const insertTransactionQuery = `
+      INSERT INTO public.transactions (user_id, amount, type, status, metadata)
+      VALUES ($1, $2, 'deposit', 'completed', $3)
+    `;
+    await client.query(insertTransactionQuery, [
+      userId, 
+      pokecoins, 
+      JSON.stringify({ 
+        stripe_session_id: session.id,
+        package_id: packageId,
+        usd_amount: amount
+      })
+    ]);
+
+    await client.query('COMMIT');
+
+    return { success: true, userId, pokecoins };
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error handling payment success:', error);
     throw error;
-  }
-}
-
-async function handlePaymentFailed(paymentIntent: any) {
-  try {
-    const { userId } = paymentIntent.metadata;
-
-    console.log(`Payment failed for user ${userId}`);
-    console.log(`Error: ${paymentIntent.last_payment_error?.message}`);
-
-    // TODO: Implementar lógica para:
-    // 1. Registrar fallo en BD
-    // 2. Notificar al usuario
-
-    return {
-      success: true,
-      message: 'Payment failure handled',
-      userId,
-    };
-  } catch (error) {
-    console.error('Error handling payment failed:', error);
-    throw error;
-  }
-}
-
-async function handleRefund(charge: any) {
-  try {
-    const { userId, packageId } = charge.metadata;
-
-    console.log(`Refund processed for user ${userId}, package ${packageId}`);
-
-    // TODO: Implementar lógica para:
-    // 1. Restar pokecoins si aún no fueron usados
-    // 2. Registrar reembolso en BD
-    // 3. Notificar al usuario
-
-    return {
-      success: true,
-      message: 'Refund processed',
-      userId,
-    };
-  } catch (error) {
-    console.error('Error handling refund:', error);
-    throw error;
+  } finally {
+    client.release();
   }
 }

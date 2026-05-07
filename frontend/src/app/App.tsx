@@ -16,6 +16,7 @@ import { BoxCovers } from './components/boxes/BoxCovers';
 import { Inventory } from './components/inventory/Inventory';
 import { Trade } from './components/trade/Trade';
 import { Delivery } from './components/delivery/Delivery';
+import { PaymentSuccess } from './components/payment/PaymentSuccess';
 import { Toaster } from './components/ui/sonner';
 import { SupabaseStatus } from './components/debug/SupabaseStatus';
 
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/trade" element={<Trade />} />
               <Route path="/delivery" element={<Delivery />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/battles" element={<Battles />} />
               <Route path="/upgrade" element={<Upgrade />} />
               <Route path="/rewards" element={<Rewards />} />

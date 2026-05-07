@@ -254,7 +254,7 @@ export function Delivery() {
             <Truck className="w-16 h-16 mx-auto mb-4 text-gray-600" />
             <h2 className="mb-4">Inicia sesión para solicitar envíos</h2>
             <p className="text-gray-400 mb-6">Necesitas una cuenta para solicitar el envío de tus cartas a domicilio.</p>
-            <Button variant="primary" onClick={() => window.location.href = '/login'}>Iniciar Sesión</Button>
+            <Button variant="default" onClick={() => window.location.href = '/login'}>Iniciar Sesión</Button>
           </div>
         </Card>
       </div>
@@ -341,7 +341,7 @@ export function Delivery() {
                     <Box className="w-16 h-16 mx-auto mb-4 text-gray-600" />
                     <h3 className="mb-2">Sin pedidos todavía</h3>
                     <p className="text-gray-400 mb-6">Crea tu primera solicitud de envío desde la pestaña "Nueva Solicitud".</p>
-                    <Button variant="secondary" onClick={() => setActiveTab('new')}>
+                    <Button variant="outline" onClick={() => setActiveTab('new')}>
                       Crear Pedido
                     </Button>
                   </div>
@@ -553,7 +553,7 @@ export function Delivery() {
                           <Package className="w-16 h-16 mx-auto mb-4 text-gray-600" />
                           <h3 className="mb-2">No hay cartas disponibles</h3>
                           <p className="text-gray-400 mb-6">Abre algunas cajas para obtener cartas.</p>
-                          <Button variant="primary" onClick={() => window.location.href = '/cases'}>Abrir Cajas</Button>
+                          <Button variant="default" onClick={() => window.location.href = '/cases'}>Abrir Cajas</Button>
                         </div>
                       </Card>
                     ) : (
@@ -600,7 +600,7 @@ export function Delivery() {
 
                     <div className="flex justify-end">
                       <Button
-                        variant="primary"
+                        variant="default"
                         onClick={() => setStep('shipping-info')}
                         disabled={selectedCards.length === 0}
                         className={selectedCards.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}
@@ -702,10 +702,10 @@ export function Delivery() {
                         </Card>
 
                         <div className="flex flex-col gap-3">
-                          <Button variant="secondary" onClick={() => setStep('select-cards')}>
+                          <Button variant="outline" onClick={() => setStep('select-cards')}>
                             ← Atrás
                           </Button>
-                          <Button variant="primary" onClick={() => {
+                          <Button variant="default" onClick={() => {
                             if (validateForm()) setStep('review');
                           }}>
                             Revisar pedido <ArrowRight className="w-4 h-4 ml-1" />
@@ -777,10 +777,10 @@ export function Delivery() {
                       </Card>
 
                       <div className="flex gap-3">
-                        <Button variant="secondary" className="flex-1" onClick={() => setStep('shipping-info')}>
+                        <Button variant="outline" className="flex-1" onClick={() => setStep('shipping-info')}>
                           ← Atrás
                         </Button>
-                        <Button variant="primary" className="flex-1" onClick={handleSubmitOrder} disabled={submitting}>
+                        <Button variant="default" className="flex-1" onClick={handleSubmitOrder} disabled={submitting}>
                           {submitting ? (
                             <><RefreshCw className="w-4 h-4 animate-spin" /> Procesando...</>
                           ) : (
@@ -843,10 +843,10 @@ export function Delivery() {
                     </Card>
 
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <Button variant="primary" onClick={handleNewOrder}>
+                      <Button variant="default" onClick={handleNewOrder}>
                         <PlusCircle className="w-4 h-4" /> Nuevo Pedido
                       </Button>
-                      <Button variant="secondary" onClick={() => { setActiveTab('orders'); handleNewOrder(); }}>
+                      <Button variant="outline" onClick={() => { setActiveTab('orders'); handleNewOrder(); }}>
                         <History className="w-4 h-4" /> Ver Mis Pedidos
                       </Button>
                     </div>

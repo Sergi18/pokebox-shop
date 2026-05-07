@@ -55,7 +55,7 @@ export function Rewards() {
               </div>
               <div className="text-center">
                 <div className="text-[var(--neon-yellow)] mb-2">+200 Credits</div>
-                <Button variant="primary" size="lg">
+                <Button variant="default" size="lg">
                   <Gift className="w-5 h-5" />
                   Claim Bonus
                 </Button>
@@ -174,7 +174,7 @@ export function Rewards() {
                   <p className="text-gray-400 mb-3">{tier.requirement}</p>
                   <div className="text-[var(--neon-yellow)] mb-4">{tier.reward}</div>
                   {tier.unlocked ? (
-                    <Button variant="primary" size="sm" className="w-full">
+                    <Button variant="default" size="sm" className="w-full">
                       <Gift className="w-4 h-4" />
                       Claim
                     </Button>

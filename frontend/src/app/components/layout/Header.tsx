@@ -96,7 +96,7 @@ export function Header() {
                 {/* Balance Display */}
                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[var(--dark-hover)] border border-gray-700 rounded-lg">
                   <Wallet className="w-4 h-4 text-[var(--neon-yellow)]" />
-                  <span className="text-white font-medium">${user.balance.toLocaleString()}</span>
+                  <span className="text-white font-medium">{user.balance.toLocaleString()} <span className="text-[var(--neon-yellow)] text-xs">Coins</span></span>
                 </div>
                 
                 {/* User Menu */}
@@ -177,7 +177,7 @@ export function Header() {
                   <Button variant="ghost" size="sm">Login</Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="primary" size="sm">Register</Button>
+                  <Button variant="default" size="sm">Register</Button>
                 </Link>
               </>
             )}

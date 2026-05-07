@@ -264,7 +264,7 @@ export function Battles() {
                 </div>
                 
                 <div className="flex gap-4">
-                  <Button variant="secondary" size="lg" className="flex-1" onClick={() => setShowCreateModal(false)}>
+                  <Button variant="outline" size="lg" className="flex-1" onClick={() => setShowCreateModal(false)}>
                     Cancel
                   </Button>
                   <Button variant="danger" size="lg" className="flex-1" onClick={() => setShowCreateModal(false)}>

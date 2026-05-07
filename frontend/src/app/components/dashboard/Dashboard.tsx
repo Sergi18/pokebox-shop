@@ -4,11 +4,17 @@ import { User, Wallet, Package, Trophy, TrendingUp, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { PaymentModal } from '../payment/PaymentModal';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export function Dashboard() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -62,15 +68,26 @@ export function Dashboard() {
               </div>
               <div className="text-center">
                 <div className="text-[var(--neon-yellow)] mb-2">Balance</div>
-                <div className="text-white mb-4">${user.balance.toLocaleString()}</div>
-                <Button variant="primary" size="sm">
+                <div className="text-white mb-4 text-2xl font-bold">{user.balance.toLocaleString()} <span className="text-sm text-[var(--neon-yellow)]">PokéCoins</span></div>
+                <Button variant="default" size="sm" onClick={() => setShowPaymentModal(true)}>
                   <Wallet className="w-4 h-4" />
-                  Add Credits
+                  Add PokéCoins
                 </Button>
               </div>
             </div>
           </Card>
         </motion.div>
+        
+        {/* Payment Modal */}
+        {showPaymentModal && (
+          <Elements stripe={stripePromise}>
+            <PaymentModal 
+              userId={user.id} 
+              email={user.email} 
+              onClose={() => setShowPaymentModal(false)} 
+            />
+          </Elements>
+        )}
         
         {/* Stats Grid */}
         <motion.div
@@ -143,7 +160,7 @@ export function Dashboard() {
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-[var(--neon-yellow)] mb-1">{activity.value} Credits</div>
+                      <div className="text-[var(--neon-yellow)] mb-1">{activity.value} PokéCoins</div>
                       <div className="text-gray-400">{activity.time}</div>
                     </div>
                   </div>

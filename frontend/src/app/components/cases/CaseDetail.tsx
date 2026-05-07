@@ -277,7 +277,7 @@ export function CaseDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-4 bg-[var(--dark-hover)] rounded-lg">
                   <div className="text-3xl mb-2 text-[var(--neon-yellow)]">{caseItem.price}</div>
-                  <div className="text-gray-400 text-sm">Credits</div>
+                  <div className="text-gray-400 text-sm">PokéCoins</div>
                 </div>
                 <div className="text-center p-4 bg-[var(--dark-hover)] rounded-lg">
                   <div className="text-3xl mb-2 text-[var(--neon-blue)]">{caseItem.dropRate}</div>
@@ -308,15 +308,15 @@ export function CaseDetail() {
             {/* Action Buttons */}
             <div className="flex gap-4">
               <Button 
-                variant="primary" 
+                variant="default" 
                 className="flex-1"
                 onClick={handleOpenCase}
                 disabled={isOpening || !isAuthenticated || (user && user.balance < caseItem.price)}
               >
-                {isOpening ? 'Opening...' : `Open Case - ${caseItem.price} Credits`}
+                {isOpening ? 'Opening...' : `Open Case - ${caseItem.price} PokéCoins`}
               </Button>
               <Button 
-                variant="secondary"
+                variant="outline"
                 onClick={() => {/* TODO: Implement preview */}}
               >
                 Preview Items

@@ -199,13 +199,13 @@ export function CaseOpeningModal({ isOpen, onClose, item, caseName }: CaseOpenin
                       className="flex gap-4 justify-center"
                     >
                       <Button
-                        variant="primary"
+                        variant="default"
                         onClick={onClose}
                       >
                         Continue
                       </Button>
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         onClick={() => {
                           navigate('/inventory');
                           onClose();

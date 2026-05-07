@@ -148,7 +148,7 @@ export function Support() {
                   />
                 </div>
                 
-                <Button type="submit" variant="primary" size="lg" className="w-full">
+                <Button type="submit" variant="default" size="lg" className="w-full">
                   <Send className="w-5 h-5" />
                   Send Message
                 </Button>

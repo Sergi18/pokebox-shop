@@ -207,14 +207,29 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.game_results ENABLE ROW LEVEL SECURITY;
 
--- Políticas básicas (Ejemplo: Solo el dueño puede ver su cartera)
+-- Políticas de Profiles
 CREATE POLICY "Profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Wallets are private" ON public.wallets FOR SELECT USING (auth.uid() = user_id);
+-- Políticas de Wallets
+CREATE POLICY "Users can view own wallet" ON public.wallets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own wallet" ON public.wallets FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "System can manage wallets" ON public.wallets FOR ALL USING (true); -- Para el backend
 
-CREATE POLICY "Inventory viewable by owner" ON public.user_inventory FOR SELECT USING (auth.uid() = user_id);
+-- Políticas de Inventory
+CREATE POLICY "Users can view own inventory" ON public.user_inventory FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert into own inventory" ON public.user_inventory FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete from own inventory" ON public.user_inventory FOR DELETE USING (auth.uid() = user_id);
+
+-- Políticas de Game Results
+CREATE POLICY "Users can view own results" ON public.game_results FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own results" ON public.game_results FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Políticas de Transactions
+CREATE POLICY "Users can view own transactions" ON public.transactions FOR SELECT USING (auth.uid() = user_id);
+
 
 -- 13. TRIGGERS (AUTOMATIZACIÓN)
 -- Crear perfil y cartera automáticamente al registrarse

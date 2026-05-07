@@ -174,7 +174,7 @@ export function Inventory() {
                   ? 'Start opening cases to build your collection!'
                   : `You don't have any ${filter} items yet`}
               </p>
-              <Button variant="primary" onClick={() => window.location.href = '/cases'}>
+              <Button variant="default" onClick={() => window.location.href = '/cases'}>
                 Browse Cases
               </Button>
             </Card>
@@ -226,10 +226,10 @@ export function Inventory() {
 
                   {/* Actions */}
                   <div className="mt-4 pt-4 border-t border-gray-800 flex gap-2">
-                    <Button variant="secondary" className="flex-1 text-sm py-2">
+                    <Button variant="outline" className="flex-1 text-sm py-2">
                       Sell
                     </Button>
-                    <Button variant="secondary" className="flex-1 text-sm py-2">
+                    <Button variant="outline" className="flex-1 text-sm py-2">
                       List
                     </Button>
                   </div>
