@@ -1,5 +1,5 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import type { Item } from '../../context/AuthContext';
 import { Card } from '../ui/Card';
@@ -10,7 +10,8 @@ import {
   Truck, Home, Package, CheckCircle, Clock, MapPin,
   Phone, Mail, User, Search, ChevronDown, Star,
   ArrowRight, RefreshCw, Box, ShieldCheck, Globe,
-  Sparkles, History, PlusCircle, Info,
+  Sparkles, History, PlusCircle, Info, ArrowLeft,
+  BadgeCheck, ExternalLink, Timer
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ function getStatusInfo(status: DeliveryOrder['status']) {
 }
 
 function loadOrders(userId: string): DeliveryOrder[] {
+  if (typeof window === 'undefined') return [];
   const all: DeliveryOrder[] = JSON.parse(localStorage.getItem('pokebox_delivery_orders') || '[]');
   return all.filter(o => o.userId === userId).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -86,6 +88,7 @@ function loadOrders(userId: string): DeliveryOrder[] {
 }
 
 function saveOrder(order: DeliveryOrder) {
+  if (typeof window === 'undefined') return;
   const all: DeliveryOrder[] = JSON.parse(localStorage.getItem('pokebox_delivery_orders') || '[]');
   all.push(order);
   localStorage.setItem('pokebox_delivery_orders', JSON.stringify(all));
@@ -100,24 +103,30 @@ function Field({
   onChange: (v: string) => void; placeholder?: string; required?: boolean; error?: string;
 }) {
   return (
-    <div>
-      <label className="block text-sm text-gray-400 mb-1.5">
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">
         {label} {required && <span className="text-[var(--neon-yellow)]">*</span>}
       </label>
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+      <div className="relative group">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg border border-white/5 group-focus-within:border-[var(--neon-blue)]/50 transition-colors">
+          <Icon className="w-3.5 h-3.5 text-gray-500 group-focus-within:text-[var(--neon-blue)]" />
+        </div>
         <input
           type={type}
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full pl-9 pr-4 py-2.5 bg-[var(--dark-hover)] border rounded-lg text-white placeholder-gray-600
-            focus:outline-none transition-colors ${error
-              ? 'border-red-500 focus:border-red-400'
-              : 'border-gray-700 focus:border-[var(--neon-blue)]'}`}
+          className={`w-full pl-12 pr-4 py-3 bg-black/20 border-2 rounded-xl text-white placeholder-gray-600 font-medium
+            focus:outline-none transition-all ${error
+              ? 'border-red-500/50 focus:border-red-500'
+              : 'border-white/5 focus:border-[var(--neon-blue)]'}`}
         />
       </div>
-      {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+      {error && (
+        <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-red-400 text-[10px] font-bold ml-1 uppercase">
+          {error}
+        </motion.p>
+      )}
     </div>
   );
 }
@@ -217,7 +226,7 @@ export function Delivery() {
   const handleSubmitOrder = async () => {
     if (!user) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1500)); // simulate processing
+    await new Promise(r => setTimeout(r, 2000)); // simulate processing
     const order: DeliveryOrder = {
       id: `order_${Date.now()}`,
       userId: user.id,
@@ -234,7 +243,7 @@ export function Delivery() {
     setOrders(prev => [order, ...prev]);
     setStep('success');
     setSubmitting(false);
-    toast.success('¡Pedido creado! Recibirás tus cartas pronto.');
+    toast.success('¡Solicitud de envío confirmada!');
   };
 
   const handleNewOrder = () => {
@@ -248,13 +257,17 @@ export function Delivery() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <div className="text-center py-12">
-            <Truck className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-            <h2 className="mb-4">Inicia sesión para solicitar envíos</h2>
-            <p className="text-gray-400 mb-6">Necesitas una cuenta para solicitar el envío de tus cartas a domicilio.</p>
-            <Button variant="default" onClick={() => window.location.href = '/login'}>Iniciar Sesión</Button>
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="max-w-md w-full border-2 border-white/5">
+          <div className="text-center py-12 px-6">
+            <div className="w-20 h-20 bg-[var(--neon-blue)]/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-[var(--neon-blue)]/20">
+              <User className="w-10 h-10 text-[var(--neon-blue)]" />
+            </div>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-4 text-white">Acceso Restringido</h2>
+            <p className="text-gray-400 mb-8 font-medium">Inicia sesión con tu cuenta de Entrenador para solicitar el envío de tus cartas físicas.</p>
+            <Button variant="default" className="w-full py-6 text-lg font-black italic" onClick={() => window.location.href = '/login'}>
+              INICIAR SESIÓN
+            </Button>
           </div>
         </Card>
       </div>
@@ -262,92 +275,97 @@ export function Delivery() {
   }
 
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-6">
+    <div className="min-h-screen py-24 bg-[#0a0e1a]">
+      <div className="container mx-auto px-6 max-w-7xl">
 
         {/* ── Header ── */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-gradient-to-r from-[var(--neon-blue)]/20 to-purple-500/20 rounded-lg border border-[var(--neon-blue)]/30">
-              <Truck className="w-6 h-6 text-[var(--neon-blue)]" />
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 bg-[var(--neon-blue)]/10 text-[var(--neon-blue)] text-[10px] font-black uppercase tracking-widest border border-[var(--neon-blue)]/30 rounded-full">
+                Premium Shipping
+              </span>
             </div>
-            <h1 className="bg-gradient-to-r from-[var(--neon-blue)] to-purple-400 bg-clip-text text-transparent">
-              Envío a Domicilio
+            <h1 className="text-5xl font-black italic text-white uppercase tracking-tighter mb-3 leading-none">
+              Envío a <span className="text-[var(--neon-blue)]">Domicilio</span>
             </h1>
-          </div>
-          <p className="text-gray-400 text-lg">
-            Recibe tus cartas digitales impresas y enviadas directamente a tu hogar.
-          </p>
-        </motion.div>
+            <p className="text-gray-500 font-medium max-w-xl">
+              Convierte tu colección digital en tesoros reales. Imprimimos tus cartas en calidad profesional y las enviamos a cualquier parte del mundo.
+            </p>
+          </motion.div>
 
-        {/* ── Info Banner ── */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mb-8">
-          <div className="p-4 bg-[var(--dark-card)] border border-[var(--neon-blue)]/20 rounded-xl flex flex-wrap gap-6 items-center">
-            {[
-              { icon: ShieldCheck, label: 'Impresión premium', desc: 'Cartas de alta calidad' },
-              { icon: Truck, label: 'Envío seguro', desc: 'Embalaje protegido' },
-              { icon: Globe, label: 'Envío internacional', desc: 'A más de 30 países' },
-              { icon: Clock, label: '10-15 días hábiles', desc: 'Tiempo estimado' },
-            ].map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="flex items-center gap-3">
-                <Icon className="w-5 h-5 text-[var(--neon-blue)]" />
-                <div>
-                  <div className="text-sm text-white">{label}</div>
-                  <div className="text-xs text-gray-500">{desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── Tabs ── */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="mb-8">
-          <div className="flex gap-2 p-1 bg-[var(--dark-card)] border border-gray-800 rounded-xl w-fit">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex gap-2 p-1.5 bg-[#131829] border-2 border-white/5 rounded-2xl w-fit">
             <button
               onClick={() => setActiveTab('new')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all text-sm ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-black italic uppercase text-xs tracking-wider ${
                 activeTab === 'new'
-                  ? 'bg-gradient-to-r from-[var(--neon-blue)] to-purple-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[var(--neon-blue)] text-black shadow-[0_0_20px_rgba(0,212,255,0.3)]'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
               }`}
             >
               <PlusCircle className="w-4 h-4" /> Nueva Solicitud
             </button>
             <button
               onClick={() => setActiveTab('orders')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all text-sm ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-black italic uppercase text-xs tracking-wider ${
                 activeTab === 'orders'
-                  ? 'bg-gradient-to-r from-[var(--neon-blue)] to-purple-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[var(--neon-blue)] text-black shadow-[0_0_20px_rgba(0,212,255,0.3)]'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
               }`}
             >
               <History className="w-4 h-4" /> Mis Pedidos
               {orders.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 bg-[var(--neon-blue)]/20 text-[var(--neon-blue)] rounded text-xs">
+                <span className={`ml-1 px-2 py-0.5 rounded-lg text-[10px] ${activeTab === 'orders' ? 'bg-black/20' : 'bg-[var(--neon-blue)]/20 text-[var(--neon-blue)]'}`}>
                   {orders.length}
                 </span>
               )}
             </button>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
 
-        {/* ════════════════════════ ORDER HISTORY TAB ═══════════════════════ */}
+        {/* ── Info Features ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {[
+            { icon: ShieldCheck, label: 'Calidad Premium', desc: 'Papel holográfico de 350g', color: 'blue' },
+            { icon: Truck, label: 'Envío Express', desc: 'Embalaje ultra-protegido', color: 'purple' },
+            { icon: Globe, label: 'Global Delivery', desc: 'Envíos a todo el mundo', color: 'emerald' },
+            { icon: Timer, label: 'Trackeable', desc: 'Seguimiento en tiempo real', color: 'yellow' },
+          ].map(({ icon: Icon, label, desc, color }) => (
+            <motion.div 
+              key={label}
+              whileHover={{ y: -5 }}
+              className="p-5 bg-[#131829] border-2 border-white/5 rounded-[1.5rem] flex items-center gap-4 group"
+            >
+              <div className={`p-3 bg-white/5 rounded-2xl group-hover:bg-white/10 transition-colors border border-white/5`}>
+                <Icon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-white uppercase italic tracking-tight">{label}</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{desc}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ════════════════════════ CONTENT AREA ═══════════════════════ */}
         <AnimatePresence mode="wait">
           {activeTab === 'orders' && (
-            <motion.div key="orders-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div key="orders-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               {orders.length === 0 ? (
-                <Card>
-                  <div className="text-center py-12">
-                    <Box className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                    <h3 className="mb-2">Sin pedidos todavía</h3>
-                    <p className="text-gray-400 mb-6">Crea tu primera solicitud de envío desde la pestaña "Nueva Solicitud".</p>
-                    <Button variant="outline" onClick={() => setActiveTab('new')}>
-                      Crear Pedido
+                <Card className="border-2 border-dashed border-white/10 bg-transparent py-20">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Box className="w-10 h-10 text-gray-700" />
+                    </div>
+                    <h3 className="text-xl font-black text-white uppercase italic mb-2">No hay historial</h3>
+                    <p className="text-gray-500 font-medium mb-8 max-w-xs mx-auto">Todavía no has realizado ninguna solicitud de envío.</p>
+                    <Button variant="outline" className="px-8 border-2 border-white/10 font-black italic uppercase" onClick={() => setActiveTab('new')}>
+                      CREAR MI PRIMER PEDIDO
                     </Button>
                   </div>
                 </Card>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-6">
                   {orders.map((order, idx) => {
                     const statusInfo = getStatusInfo(order.status);
                     const StatusIcon = statusInfo.icon;
@@ -356,76 +374,124 @@ export function Delivery() {
                         key={order.id}
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.1 }}
                       >
-                        <Card>
-                          <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-                            {/* Order info */}
+                        <Card className="p-0 border-2 border-white/5 overflow-hidden">
+                          <div className="p-6 md:p-8 flex flex-col lg:flex-row lg:items-center gap-8">
+                            {/* Order Main Info */}
                             <div className="flex-1">
-                              <div className="flex flex-wrap items-center gap-3 mb-3">
-                                <span className="text-white">{order.orderNumber}</span>
-                                <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs ${statusInfo.bg} ${statusInfo.color}`}>
-                                  <StatusIcon className="w-3 h-3" />
+                              <div className="flex flex-wrap items-center gap-3 mb-6">
+                                <span className="text-lg font-black text-white italic tracking-tighter">{order.orderNumber}</span>
+                                <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full border-2 font-black uppercase italic text-[10px] tracking-widest ${statusInfo.bg} ${statusInfo.color}`}>
+                                  <StatusIcon className="w-3.5 h-3.5" />
                                   {statusInfo.label}
-                                </span>
-                                <span className="text-gray-500 text-xs">
-                                  {new Date(order.createdAt).toLocaleDateString('es-ES')}
+                                </div>
+                                <span className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
+                                  Registrado: {new Date(order.createdAt).toLocaleDateString('es-ES')}
                                 </span>
                               </div>
 
-                              {/* Cards preview */}
-                              <div className="flex flex-wrap gap-2 mb-3">
-                                {order.cards.map(card => (
-                                  <div
-                                    key={card.id}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRarityColor(card.rarity)} bg-opacity-10 border border-gray-700`}
-                                  >
-                                    <span className="text-sm">{rarityEmoji[card.rarity]}</span>
-                                    <span className="text-xs text-white">{card.name}</span>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Cards */}
+                                <div>
+                                  <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">Cartas en este envío</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {order.cards.map(card => (
+                                      <div
+                                        key={card.id}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 transition-all cursor-default group`}
+                                      >
+                                        <span className="text-sm">{rarityEmoji[card.rarity]}</span>
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-tight group-hover:text-[var(--neon-blue)] transition-colors">{card.name}</span>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
+                                </div>
 
-                              {/* Address */}
-                              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                <MapPin className="w-3.5 h-3.5" />
-                                <span>{order.address.address1}, {order.address.city}, {order.address.country}</span>
+                                {/* Destination */}
+                                <div>
+                                  <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">Destino</p>
+                                  <div className="flex items-start gap-3">
+                                    <div className="p-2 bg-white/5 rounded-lg border border-white/5 shrink-0">
+                                      <MapPin className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-bold text-white leading-tight mb-1">{order.address.fullName}</p>
+                                      <p className="text-[10px] font-medium text-gray-500 leading-tight">
+                                        {order.address.address1}, {order.address.city}<br />
+                                        {order.address.state}, {order.address.country}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Tracking */}
-                            <div className="flex flex-col gap-2 md:items-end shrink-0">
-                              <div className="text-xs text-gray-500">Tracking</div>
-                              <div className="font-mono text-sm text-[var(--neon-blue)] bg-[var(--neon-blue)]/10 border border-[var(--neon-blue)]/20 px-3 py-1.5 rounded-lg">
-                                {order.trackingNumber}
+                            {/* Tracking & Actions */}
+                            <div className="lg:w-64 shrink-0 flex flex-col gap-4">
+                              <div className="p-6 bg-black/30 rounded-3xl border-2 border-white/5">
+                                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center justify-between">
+                                  Tracking Number
+                                  <ExternalLink className="w-3 h-3 text-[var(--neon-blue)]" />
+                                </div>
+                                <div className="font-mono text-sm font-black text-[var(--neon-blue)] mb-3 bg-[var(--neon-blue)]/5 p-2 rounded-lg text-center border border-[var(--neon-blue)]/20">
+                                  {order.trackingNumber}
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                  <Timer className="w-3.5 h-3.5" />
+                                  <span>Entrega: {order.estimatedDelivery}</span>
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-500">
-                                Entrega est.: {order.estimatedDelivery}
-                              </div>
+                              <Button variant="outline" className="w-full rounded-2xl border-white/5 hover:bg-white/5 py-4 text-[10px] font-black uppercase italic tracking-widest">
+                                SOPORTE DE ENVÍO
+                              </Button>
                             </div>
                           </div>
 
-                          {/* Progress bar */}
-                          <div className="mt-4 pt-4 border-t border-gray-800">
-                            <div className="flex items-center justify-between mb-2">
-                              {(['processing', 'preparing', 'shipped', 'delivered'] as const).map((s, i) => {
-                                const si = getStatusInfo(s);
-                                const SI = si.icon;
-                                const steps = ['processing', 'preparing', 'shipped', 'delivered'];
-                                const currentIdx = steps.indexOf(order.status);
-                                const done = i <= currentIdx;
-                                return (
-                                  <div key={s} className="flex items-center flex-1">
-                                    <div className={`flex flex-col items-center gap-1 ${done ? si.color : 'text-gray-700'}`}>
-                                      <SI className="w-4 h-4" />
-                                      <span className="text-xs hidden sm:block">{si.label}</span>
+                          {/* Progress Line */}
+                          <div className="px-6 md:px-8 pb-8">
+                            <div className="relative pt-6 border-t border-white/5">
+                              <div className="flex items-center justify-between">
+                                {(['processing', 'preparing', 'shipped', 'delivered'] as const).map((s, i) => {
+                                  const si = getStatusInfo(s);
+                                  const SI = si.icon;
+                                  const steps = ['processing', 'preparing', 'shipped', 'delivered'];
+                                  const currentIdx = steps.indexOf(order.status);
+                                  const active = i <= currentIdx;
+                                  
+                                  return (
+                                    <div key={s} className="relative flex flex-col items-center flex-1 group">
+                                      {/* Bar */}
+                                      {i < 3 && (
+                                        <div className="absolute left-1/2 top-4 w-full h-[2px] bg-white/5 overflow-hidden">
+                                          <motion.div 
+                                            initial={{ scaleX: 0 }}
+                                            animate={{ scaleX: i < currentIdx ? 1 : 0 }}
+                                            style={{ originX: 0 }}
+                                            className="h-full bg-[var(--neon-blue)] shadow-[0_0_10px_rgba(0,212,255,0.5)]"
+                                          />
+                                        </div>
+                                      )}
+                                      
+                                      {/* Circle */}
+                                      <div className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+                                        active 
+                                          ? 'border-[var(--neon-blue)] bg-[#0a0e1a] text-[var(--neon-blue)] shadow-[0_0_15px_rgba(0,212,255,0.3)]' 
+                                          : 'border-white/5 bg-white/5 text-gray-700'
+                                      }`}>
+                                        <SI className="w-4 h-4" />
+                                      </div>
+                                      
+                                      {/* Label */}
+                                      <span className={`mt-3 text-[9px] font-black uppercase tracking-widest transition-colors duration-500 ${
+                                        active ? 'text-white' : 'text-gray-700'
+                                      }`}>
+                                        {si.label}
+                                      </span>
                                     </div>
-                                    {i < 3 && (
-                                      <div className={`flex-1 h-0.5 mx-2 ${i < currentIdx ? 'bg-[var(--neon-blue)]' : 'bg-gray-800'}`} />
-                                    )}
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                         </Card>
@@ -439,15 +505,15 @@ export function Delivery() {
 
           {/* ════════════════════════ NEW ORDER TAB ═══════════════════════════ */}
           {activeTab === 'new' && (
-            <motion.div key="new-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div key="new-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
 
               {/* Step indicator */}
               {step !== 'success' && (
-                <div className="flex items-center gap-2 mb-8">
+                <div className="flex items-center justify-center gap-4 mb-12 overflow-x-auto pb-4">
                   {[
-                    { id: 'select-cards', label: '1. Seleccionar cartas', icon: Sparkles },
-                    { id: 'shipping-info', label: '2. Dirección de envío', icon: MapPin },
-                    { id: 'review', label: '3. Confirmar pedido', icon: CheckCircle },
+                    { id: 'select-cards', label: 'Cartas', icon: Sparkles },
+                    { id: 'shipping-info', label: 'Dirección', icon: MapPin },
+                    { id: 'review', label: 'Confirmar', icon: BadgeCheck },
                   ].map((s, idx) => {
                     const stepOrder = ['select-cards', 'shipping-info', 'review', 'success'];
                     const current = stepOrder.indexOf(step);
@@ -456,19 +522,23 @@ export function Delivery() {
                     const isActive = current === thisStep;
                     const Icon = s.icon;
                     return (
-                      <div key={s.id} className="flex items-center gap-2">
-                        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                          isActive
-                            ? 'bg-gradient-to-r from-[var(--neon-blue)] to-purple-500 text-white'
-                            : isDone
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                            : 'bg-[var(--dark-card)] text-gray-500'
-                        }`}>
-                          <Icon className="w-4 h-4" />
-                          <span className="text-sm hidden sm:inline">{s.label}</span>
+                      <React.Fragment key={s.id}>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all duration-300 border-2 ${
+                            isActive
+                              ? 'bg-[var(--neon-blue)]/10 border-[var(--neon-blue)] text-white shadow-[0_0_20px_rgba(0,212,255,0.15)]'
+                              : isDone
+                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                              : 'bg-white/5 border-white/5 text-gray-600'
+                          }`}>
+                            <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--neon-blue)]' : ''}`} />
+                            <span className="text-sm font-black italic uppercase tracking-tight leading-none">{s.label}</span>
+                          </div>
                         </div>
-                        {idx < 2 && <div className="w-6 h-px bg-gray-700" />}
-                      </div>
+                        {idx < 2 && (
+                          <ArrowRight className={`w-4 h-4 shrink-0 ${current > idx ? 'text-emerald-500' : 'text-gray-800'}`} />
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </div>
@@ -478,238 +548,268 @@ export function Delivery() {
               <AnimatePresence mode="wait">
                 {step === 'select-cards' && (
                   <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                    <Card className="mb-6">
-                      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
-                        <div>
-                          <h2 className="text-lg mb-1">Elige las cartas a recibir</h2>
-                          <p className="text-sm text-gray-400">Máximo {MAX_CARDS} cartas por pedido</p>
-                        </div>
-                        <div className={`px-3 py-1.5 rounded-lg border text-sm ${
-                          selectedCards.length === MAX_CARDS
-                            ? 'bg-[var(--neon-yellow)]/10 border-[var(--neon-yellow)]/30 text-[var(--neon-yellow)]'
-                            : 'bg-[var(--dark-hover)] border-gray-700 text-gray-400'
-                        }`}>
-                          {selectedCards.length} / {MAX_CARDS} seleccionadas
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <input
-                            type="text"
-                            placeholder="Buscar carta..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-[var(--dark-hover)] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--neon-blue)]"
-                          />
-                        </div>
-                        <div className="flex gap-2 flex-wrap">
-                          {rarityFilters.map(r => (
-                            <button
-                              key={r}
-                              onClick={() => setRarityFilter(r)}
-                              className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                                rarityFilter === r
-                                  ? 'bg-[var(--neon-blue)] text-black'
-                                  : 'bg-[var(--dark-hover)] text-gray-400 hover:text-white'
-                              }`}
-                            >
-                              {r === 'all' ? 'Todos' : r}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </Card>
-
-                    {/* Selected cards summary */}
-                    {selectedCards.length > 0 && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                        <div className="p-4 bg-[var(--neon-blue)]/5 border border-[var(--neon-blue)]/20 rounded-xl">
-                          <div className="text-sm text-gray-400 mb-3">Cartas seleccionadas:</div>
-                          <div className="flex flex-wrap gap-2">
-                            {selectedCards.map(card => (
-                              <button
-                                key={card.id}
-                                onClick={() => toggleCard(card)}
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRarityColor(card.rarity)} bg-opacity-20 border border-[var(--neon-blue)]/30 text-white text-xs hover:opacity-70 transition-opacity`}
-                              >
-                                {rarityEmoji[card.rarity]} {card.name} ×
-                              </button>
-                            ))}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                      {/* Sidebar Filters */}
+                      <div className="lg:col-span-1 space-y-6">
+                        <Card className="border-2 border-white/5 p-6 rounded-[2rem]">
+                          <div className="mb-8">
+                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                              <Search className="w-3 h-3" /> Buscar Carta
+                            </h3>
+                            <div className="relative group">
+                              <input
+                                type="text"
+                                placeholder="Pikachu..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="w-full bg-black/40 border-2 border-white/5 focus:border-[var(--neon-blue)] rounded-xl py-3 px-4 text-white font-bold outline-none transition-all placeholder-gray-700"
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
 
-                    {loading ? (
-                      <div className="text-center py-12">
-                        <div className="animate-spin w-12 h-12 border-4 border-[var(--neon-blue)] border-t-transparent rounded-full mx-auto" />
-                        <p className="text-gray-400 mt-4">Cargando inventario...</p>
-                      </div>
-                    ) : filteredInventory.length === 0 ? (
-                      <Card>
-                        <div className="text-center py-12">
-                          <Package className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                          <h3 className="mb-2">No hay cartas disponibles</h3>
-                          <p className="text-gray-400 mb-6">Abre algunas cajas para obtener cartas.</p>
-                          <Button variant="default" onClick={() => window.location.href = '/cases'}>Abrir Cajas</Button>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-8">
-                        {filteredInventory.map((item, index) => {
-                          const isSelected = selectedCards.some(c => c.id === item.id);
-                          return (
-                            <motion.div
-                              key={item.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.03 }}
-                              whileHover={{ scale: 1.03 }}
-                            >
-                              <div
-                                onClick={() => toggleCard(item)}
-                                className={`relative cursor-pointer rounded-xl border transition-all duration-200 bg-[var(--dark-card)] p-3 ${
-                                  isSelected
-                                    ? 'border-[var(--neon-blue)] shadow-[0_0_20px_rgba(0,212,255,0.3)]'
-                                    : 'border-gray-700 hover:border-gray-500'
-                                }`}
-                              >
-                                {isSelected && (
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <div className="w-5 h-5 bg-[var(--neon-blue)] rounded-full flex items-center justify-center">
-                                      <CheckCircle className="w-3.5 h-3.5 text-black" />
-                                    </div>
-                                  </div>
-                                )}
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs bg-gradient-to-r ${getRarityColor(item.rarity)} text-white mb-2`}>
-                                  {item.rarity}
-                                </span>
-                                <div className={`w-full aspect-square rounded-lg bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-2 ${getRarityGlow(item.rarity)}`}>
-                                  <span className="text-3xl">{rarityEmoji[item.rarity]}</span>
+                          <div>
+                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                              <Star className="w-3 h-3" /> Rareza
+                            </h3>
+                            <div className="flex flex-col gap-2">
+                              {rarityFilters.map(r => (
+                                <button
+                                  key={r}
+                                  onClick={() => setRarityFilter(r)}
+                                  className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-black uppercase italic transition-all border-2 ${
+                                    rarityFilter === r
+                                      ? 'bg-[var(--neon-blue)]/10 border-[var(--neon-blue)] text-white'
+                                      : 'bg-black/20 border-white/5 text-gray-500 hover:border-white/10'
+                                  }`}
+                                >
+                                  <span>{r === 'all' ? 'Todas' : r}</span>
+                                  <span className="text-[10px] opacity-50">{r === 'all' ? inventory.length : inventory.filter(i => i.rarity === r).length}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </Card>
+
+                        {/* Selected Preview */}
+                        {selectedCards.length > 0 && (
+                          <Card className="border-2 border-[var(--neon-blue)]/30 bg-[var(--neon-blue)]/5 p-6 rounded-[2rem]">
+                            <h3 className="text-[10px] font-black text-[var(--neon-blue)] uppercase tracking-[0.2em] mb-4">Selección actual</h3>
+                            <div className="space-y-2 mb-6">
+                              {selectedCards.map(card => (
+                                <div key={card.id} className="flex items-center justify-between group">
+                                  <span className="text-xs font-bold text-white truncate max-w-[120px]">{card.name}</span>
+                                  <button onClick={() => toggleCard(card)} className="text-gray-500 hover:text-red-400 p-1">
+                                    <X className="w-3 h-3" />
+                                  </button>
                                 </div>
-                                <div className="text-xs text-white truncate">{item.name}</div>
-                                <div className="text-xs text-[var(--neon-yellow)]">${item.value.toLocaleString()}</div>
+                              ))}
+                            </div>
+                            <div className="pt-4 border-t border-[var(--neon-blue)]/20">
+                              <div className="flex justify-between items-end">
+                                <span className="text-[10px] font-black text-[var(--neon-blue)] uppercase italic">Capacidad</span>
+                                <span className="text-xl font-black text-white italic">{selectedCards.length}<span className="text-gray-600 text-xs not-italic">/{MAX_CARDS}</span></span>
                               </div>
-                            </motion.div>
-                          );
-                        })}
+                            </div>
+                          </Card>
+                        )}
                       </div>
-                    )}
 
-                    <div className="flex justify-end">
-                      <Button
-                        variant="default"
-                        onClick={() => setStep('shipping-info')}
-                        disabled={selectedCards.length === 0}
-                        className={selectedCards.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}
-                      >
-                        Continuar con dirección <ArrowRight className="w-4 h-4 ml-1" />
-                      </Button>
+                      {/* Inventory Grid */}
+                      <div className="lg:col-span-3">
+                        {loading ? (
+                          <div className="flex flex-col items-center justify-center py-20">
+                            <div className="relative w-16 h-16">
+                              <div className="absolute inset-0 border-4 border-white/5 rounded-full" />
+                              <div className="absolute inset-0 border-4 border-[var(--neon-blue)] border-t-transparent rounded-full animate-spin" />
+                            </div>
+                            <p className="text-gray-500 font-black italic uppercase tracking-widest mt-6">Escaneando Inventario...</p>
+                          </div>
+                        ) : filteredInventory.length === 0 ? (
+                          <div className="bg-[#131829] border-2 border-dashed border-white/5 rounded-[3rem] p-12 text-center">
+                            <Package className="w-12 h-12 text-gray-800 mx-auto mb-6" />
+                            <h3 className="text-xl font-black text-white uppercase italic mb-2">Inventario Vacío</h3>
+                            <p className="text-gray-500 font-medium mb-8 max-w-xs mx-auto">No tienes cartas de esta categoría disponibles para envío.</p>
+                            <Button variant="default" onClick={() => window.location.href = '/cases'}>ABRIR CAJAS AHORA</Button>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-10">
+                            {filteredInventory.map((item, index) => {
+                              const isSelected = selectedCards.some(c => c.id === item.id);
+                              return (
+                                <motion.div
+                                  key={item.id}
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: index * 0.02 }}
+                                  whileHover={{ y: -5 }}
+                                  onClick={() => toggleCard(item)}
+                                  className={`relative group cursor-pointer rounded-[1.5rem] border-2 transition-all duration-300 p-4 ${
+                                    isSelected
+                                      ? 'bg-[var(--neon-blue)]/10 border-[var(--neon-blue)] shadow-[0_0_25px_rgba(0,212,255,0.2)]'
+                                      : 'bg-[#131829] border-white/5 hover:border-white/20'
+                                  }`}
+                                >
+                                  {isSelected && (
+                                    <div className="absolute -top-2 -right-2 z-10 w-6 h-6 bg-[var(--neon-blue)] rounded-full flex items-center justify-center shadow-lg border-2 border-[#0a0e1a]">
+                                      <CheckCircle className="w-4 h-4 text-black" />
+                                    </div>
+                                  )}
+                                  <div className="mb-3">
+                                    <span className={`inline-block px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase italic ${getRarityColor(item.rarity)} text-white shadow-lg`}>
+                                      {item.rarity}
+                                    </span>
+                                  </div>
+                                  <div className={`w-full aspect-[3/4] rounded-2xl bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-500 overflow-hidden relative ${getRarityGlow(item.rarity)}`}>
+                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                                    <span className="text-4xl relative z-10 group-hover:scale-125 transition-transform duration-500">{rarityEmoji[item.rarity]}</span>
+                                  </div>
+                                  <div className="text-[10px] font-black text-white uppercase italic tracking-tight truncate mb-1">{item.name}</div>
+                                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">${item.value.toLocaleString()}</div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        <div className="flex justify-end sticky bottom-8 z-20">
+                          <Button
+                            variant="default"
+                            onClick={() => setStep('shipping-info')}
+                            disabled={selectedCards.length === 0}
+                            className={`px-10 py-7 text-lg font-black italic uppercase rounded-2xl shadow-2xl transition-all ${
+                              selectedCards.length === 0 ? 'opacity-50 grayscale' : 'hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            CONFIGURAR ENVÍO <ArrowRight className="w-5 h-5 ml-2" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 )}
 
                 {/* ─── STEP 2: Shipping Info ───────────────────────────────── */}
                 {step === 'shipping-info' && (
-                  <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <motion.div key="step2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                       {/* Form */}
                       <div className="lg:col-span-2">
-                        <Card>
-                          <h2 className="text-lg mb-6">Datos de envío</h2>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Card className="border-2 border-white/5 p-8 md:p-10 rounded-[2.5rem]">
+                          <div className="flex items-center gap-4 mb-10">
+                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 text-white">
+                              <MapPin className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h2 className="text-2xl font-black italic uppercase text-white leading-none">Dirección de Entrega</h2>
+                              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Completa los datos para el envío físico</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="sm:col-span-2">
                               <Field label="Nombre completo" icon={User} value={form.fullName}
-                                onChange={updateForm('fullName')} placeholder="Tu nombre" required error={errors.fullName} />
+                                onChange={updateForm('fullName')} placeholder="Ash Ketchum" required error={errors.fullName} />
                             </div>
-                            <Field label="Email" icon={Mail} type="email" value={form.email}
-                              onChange={updateForm('email')} placeholder="tu@email.com" required error={errors.email} />
-                            <Field label="Teléfono" icon={Phone} type="tel" value={form.phone}
+                            <Field label="Email de contacto" icon={Mail} type="email" value={form.email}
+                              onChange={updateForm('email')} placeholder="entrenador@paleta.com" required error={errors.email} />
+                            <Field label="Teléfono móvil" icon={Phone} type="tel" value={form.phone}
                               onChange={updateForm('phone')} placeholder="+34 600 000 000" required error={errors.phone} />
                             <div className="sm:col-span-2">
-                              <Field label="Dirección" icon={MapPin} value={form.address1}
-                                onChange={updateForm('address1')} placeholder="Calle, número, piso..." required error={errors.address1} />
+                              <Field label="Dirección de envío" icon={Home} value={form.address1}
+                                onChange={updateForm('address1')} placeholder="Calle Victoria, Nº 151" required error={errors.address1} />
                             </div>
                             <div className="sm:col-span-2">
-                              <Field label="Complemento (opcional)" icon={Home} value={form.address2}
-                                onChange={updateForm('address2')} placeholder="Apartamento, edificio..." />
+                              <Field label="Complemento (Opcional)" icon={Info} value={form.address2}
+                                onChange={updateForm('address2')} placeholder="Edificio Silph Co, Piso 7" />
                             </div>
-                            <Field label="Ciudad" icon={MapPin} value={form.city}
-                              onChange={updateForm('city')} placeholder="Ciudad" required error={errors.city} />
+                            <Field label="Ciudad" icon={Globe} value={form.city}
+                              onChange={updateForm('city')} placeholder="Ciudad Azafrán" required error={errors.city} />
                             <Field label="Provincia / Estado" icon={MapPin} value={form.state}
-                              onChange={updateForm('state')} placeholder="Provincia" required error={errors.state} />
-                            <Field label="Código postal" icon={MapPin} value={form.postalCode}
+                              onChange={updateForm('state')} placeholder="Kanto" required error={errors.state} />
+                            <Field label="Código Postal" icon={MapPin} value={form.postalCode}
                               onChange={updateForm('postalCode')} placeholder="28001" required error={errors.postalCode} />
-                            <div>
-                              <label className="block text-sm text-gray-400 mb-1.5">
-                                País <span className="text-[var(--neon-yellow)]">*</span>
-                              </label>
-                              <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">País</label>
+                              <div className="relative group">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg border border-white/5">
+                                  <Globe className="w-3.5 h-3.5 text-gray-500" />
+                                </div>
                                 <select
                                   value={form.country}
                                   onChange={e => updateForm('country')(e.target.value)}
-                                  className="w-full pl-9 pr-8 py-2.5 bg-[var(--dark-hover)] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[var(--neon-blue)] appearance-none cursor-pointer"
+                                  className="w-full pl-12 pr-10 py-3 bg-black/20 border-2 border-white/5 rounded-xl text-white font-bold outline-none transition-all appearance-none cursor-pointer focus:border-[var(--neon-blue)]"
                                 >
                                   {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                               </div>
                             </div>
                           </div>
 
-                          {/* Disclaimer */}
-                          <div className="mt-6 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2">
-                            <Info className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-                            <p className="text-xs text-yellow-300">
-                              Tus datos de envío se usan únicamente para gestionar este pedido y no se comparten con terceros. Las cartas físicas son réplicas impresas de tus cartas digitales.
+                          <div className="mt-10 p-5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-4">
+                            <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+                              <ShieldCheck className="w-5 h-5 text-[var(--neon-blue)]" />
+                            </div>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-normal">
+                              Tus datos están protegidos bajo encriptación AES-256. Solo los usaremos para gestionar el transporte de tus cartas.
                             </p>
                           </div>
                         </Card>
                       </div>
 
-                      {/* Sidebar: order summary */}
-                      <div className="space-y-4">
-                        <Card>
-                          <h3 className="text-sm text-gray-400 mb-3">Resumen del pedido</h3>
-                          <div className="space-y-2 mb-4">
+                      {/* Order Summary Sidebar */}
+                      <div className="space-y-6">
+                        <Card className="border-2 border-white/5 p-8 rounded-[2.5rem] bg-[#131829]">
+                          <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6">Detalles del Envío</h3>
+                          <div className="space-y-4 mb-8">
                             {selectedCards.map(card => (
-                              <div key={card.id} className="flex items-center gap-2">
-                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getRarityColor(card.rarity)} flex items-center justify-center shrink-0`}>
-                                  <span className="text-sm">{rarityEmoji[card.rarity]}</span>
+                              <div key={card.id} className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getRarityColor(card.rarity)} flex items-center justify-center shrink-0 shadow-lg`}>
+                                  <span className="text-lg">{rarityEmoji[card.rarity]}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-xs text-white truncate">{card.name}</div>
-                                  <div className="text-xs text-gray-500">{card.rarity}</div>
+                                  <div className="text-xs font-black text-white uppercase italic truncate">{card.name}</div>
+                                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{card.rarity}</div>
                                 </div>
                               </div>
                             ))}
                           </div>
-                          <div className="pt-3 border-t border-gray-800 flex justify-between text-sm">
-                            <span className="text-gray-400">Cartas</span>
-                            <span className="text-white">{selectedCards.length}</span>
-                          </div>
-                          <div className="flex justify-between text-sm mt-2">
-                            <span className="text-gray-400">Envío</span>
-                            <span className="text-green-400">Incluido</span>
-                          </div>
-                          <div className="flex justify-between mt-2 pt-2 border-t border-gray-800">
-                            <span className="text-gray-400">Total</span>
-                            <span className="text-[var(--neon-yellow)]">Gratis</span>
+                          
+                          <div className="space-y-3 pt-6 border-t border-white/5">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-gray-500">Cartas</span>
+                              <span className="text-white">{selectedCards.length} unid.</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-gray-500">Envío</span>
+                              <span className="text-emerald-400">Gratis (Premium)</span>
+                            </div>
+                            <div className="flex justify-between items-end pt-4 border-t border-white/5">
+                              <span className="text-[10px] font-black text-[var(--neon-blue)] uppercase italic">Total</span>
+                              <span className="text-2xl font-black text-white italic tracking-tighter">GRATIS</span>
+                            </div>
                           </div>
                         </Card>
 
-                        <div className="flex flex-col gap-3">
-                          <Button variant="outline" onClick={() => setStep('select-cards')}>
-                            ← Atrás
-                          </Button>
-                          <Button variant="default" onClick={() => {
-                            if (validateForm()) setStep('review');
-                          }}>
-                            Revisar pedido <ArrowRight className="w-4 h-4 ml-1" />
-                          </Button>
+                        <div className="flex flex-col gap-4">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              if (validateForm()) setStep('review');
+                              else toast.error('Por favor, completa todos los campos requeridos');
+                            }}
+                            className="w-full py-5 bg-[var(--neon-blue)] rounded-2xl text-black font-black italic uppercase tracking-wider shadow-[0_0_25px_rgba(0,212,255,0.2)]"
+                          >
+                            REVISAR PEDIDO
+                          </motion.button>
+                          <button
+                            onClick={() => setStep('select-cards')}
+                            className="w-full py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] hover:text-white transition-colors flex items-center justify-center gap-2"
+                          >
+                            <ArrowLeft className="w-3 h-3" /> VOLVER A LA SELECCIÓN
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -718,76 +818,105 @@ export function Delivery() {
 
                 {/* ─── STEP 3: Review & Confirm ────────────────────────────── */}
                 {step === 'review' && (
-                  <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                    <div className="max-w-2xl mx-auto space-y-6">
-                      {/* Cards */}
-                      <Card>
-                        <h3 className="mb-4 flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-[var(--neon-blue)]" /> Cartas seleccionadas
-                        </h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {selectedCards.map(card => (
-                            <div key={card.id} className={`p-3 rounded-xl bg-gradient-to-br ${getRarityColor(card.rarity)} bg-opacity-10 border border-gray-700 flex items-center gap-3`}>
-                              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getRarityColor(card.rarity)} flex items-center justify-center shrink-0 ${getRarityGlow(card.rarity)}`}>
-                                <span className="text-xl">{rarityEmoji[card.rarity]}</span>
-                              </div>
-                              <div className="min-w-0">
-                                <div className="text-xs text-white truncate">{card.name}</div>
-                                <div className="text-xs text-gray-400">{card.rarity}</div>
-                                <div className="text-xs text-[var(--neon-yellow)]">${card.value.toLocaleString()}</div>
-                              </div>
-                            </div>
-                          ))}
+                  <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                    <div className="max-w-3xl mx-auto">
+                      <Card className="border-2 border-white/5 p-10 md:p-12 rounded-[3rem] overflow-hidden relative bg-[#131829]">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-[var(--neon-blue)] to-purple-500" />
+                        
+                        <div className="text-center mb-12">
+                          <h2 className="text-3xl font-black italic uppercase text-white tracking-tighter mb-2">Finalizar Solicitud</h2>
+                          <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em]">Confirma que todos los datos son correctos</p>
                         </div>
-                      </Card>
 
-                      {/* Address */}
-                      <Card>
-                        <h3 className="mb-4 flex items-center gap-2">
-                          <MapPin className="w-5 h-5 text-[var(--neon-blue)]" /> Dirección de envío
-                        </h3>
-                        <div className="space-y-1 text-sm">
-                          <p className="text-white">{form.fullName}</p>
-                          <p className="text-gray-400">{form.address1}</p>
-                          {form.address2 && <p className="text-gray-400">{form.address2}</p>}
-                          <p className="text-gray-400">{form.postalCode} – {form.city}, {form.state}</p>
-                          <p className="text-gray-400">{form.country}</p>
-                          <p className="text-gray-400 mt-2">{form.email} · {form.phone}</p>
-                        </div>
-                        <button
-                          onClick={() => setStep('shipping-info')}
-                          className="mt-4 text-xs text-[var(--neon-blue)] hover:underline"
-                        >
-                          Editar dirección
-                        </button>
-                      </Card>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                          {/* Left: Summary */}
+                          <div className="space-y-8">
+                            <section>
+                              <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Package className="w-3 h-3" /> Cartas a Imprimir ({selectedCards.length})
+                              </h3>
+                              <div className="grid grid-cols-2 gap-3">
+                                {selectedCards.map(card => (
+                                  <div key={card.id} className="p-3 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getRarityColor(card.rarity)} flex items-center justify-center shrink-0`}>
+                                      <span className="text-xs">{rarityEmoji[card.rarity]}</span>
+                                    </div>
+                                    <span className="text-[10px] font-black text-white uppercase italic truncate leading-none">{card.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </section>
 
-                      {/* Delivery estimate */}
-                      <Card>
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-[var(--neon-blue)]/10 rounded-lg">
-                            <Truck className="w-6 h-6 text-[var(--neon-blue)]" />
+                            <section className="p-6 bg-black/30 rounded-[1.5rem] border border-white/5">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
+                                  <Truck className="w-6 h-6" />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-white uppercase italic tracking-tight">Método de Envío</p>
+                                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Premium Courier (10-15 días)</p>
+                                  <p className="text-[10px] font-black text-emerald-400 uppercase italic mt-1">Suscripción Activa: 0,00€</p>
+                                </div>
+                              </div>
+                            </section>
                           </div>
+
+                          {/* Right: Address */}
                           <div>
-                            <div className="text-white">Envío estándar</div>
-                            <div className="text-gray-400 text-sm">Tiempo estimado: 10–15 días hábiles</div>
-                            <div className="text-green-400 text-sm">Gratuito</div>
+                            <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                              <MapPin className="w-3 h-3" /> Datos de Recepción
+                            </h3>
+                            <div className="p-8 bg-white/5 border border-white/10 rounded-[2rem] space-y-4">
+                              <div>
+                                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Destinatario</p>
+                                <p className="text-sm font-black text-white uppercase italic leading-none">{form.fullName}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Dirección</p>
+                                <p className="text-xs font-bold text-white leading-relaxed">
+                                  {form.address1}<br />
+                                  {form.address2 && <>{form.address2}<br /></>}
+                                  {form.postalCode} – {form.city}<br />
+                                  {form.state}, {form.country}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Contacto</p>
+                                <p className="text-xs font-medium text-gray-400">{form.email} · {form.phone}</p>
+                              </div>
+                              <button
+                                onClick={() => setStep('shipping-info')}
+                                className="text-[10px] font-black text-[var(--neon-blue)] uppercase tracking-widest hover:underline pt-2"
+                              >
+                                EDITAR DIRECCIÓN
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </Card>
 
-                      <div className="flex gap-3">
-                        <Button variant="outline" className="flex-1" onClick={() => setStep('shipping-info')}>
-                          ← Atrás
-                        </Button>
-                        <Button variant="default" className="flex-1" onClick={handleSubmitOrder} disabled={submitting}>
-                          {submitting ? (
-                            <><RefreshCw className="w-4 h-4 animate-spin" /> Procesando...</>
-                          ) : (
-                            <><CheckCircle className="w-4 h-4" /> Confirmar Pedido</>
-                          )}
-                        </Button>
-                      </div>
+                        <div className="mt-12 flex flex-col sm:flex-row gap-4">
+                          <button
+                            onClick={() => setStep('shipping-info')}
+                            className="flex-1 py-5 border-2 border-white/5 rounded-2xl text-gray-500 font-black italic uppercase tracking-wider hover:bg-white/5 hover:text-white transition-all"
+                          >
+                            ← ATRÁS
+                          </button>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleSubmitOrder}
+                            disabled={submitting}
+                            className="flex-[2] py-5 bg-[var(--neon-blue)] rounded-2xl text-black font-black italic uppercase tracking-wider shadow-[0_0_30px_rgba(0,212,255,0.3)] flex items-center justify-center gap-3 overflow-hidden relative group"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                            {submitting ? (
+                              <><RefreshCw className="w-5 h-5 animate-spin" /> PROCESANDO...</>
+                            ) : (
+                              <><CheckCircle className="w-5 h-5" /> CONFIRMAR Y ENVIAR</>
+                            )}
+                          </motion.button>
+                        </div>
+                      </Card>
                     </div>
                   </motion.div>
                 )}
@@ -796,60 +925,62 @@ export function Delivery() {
                 {step === 'success' && lastOrder && (
                   <motion.div
                     key="success"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-lg mx-auto text-center"
+                    initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="max-w-xl mx-auto"
                   >
-                    <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-                      className="text-7xl mb-6"
-                    >
-                      📦
-                    </motion.div>
-                    <h2 className="mb-2 bg-gradient-to-r from-[var(--neon-blue)] to-purple-400 bg-clip-text text-transparent">
-                      ¡Pedido confirmado!
-                    </h2>
-                    <p className="text-gray-400 mb-8">
-                      Tus cartas serán impresas y enviadas a tu domicilio en los próximos días.
-                    </p>
+                    <Card className="border-2 border-[var(--neon-blue)]/30 bg-[#131829] p-10 text-center rounded-[3rem] relative shadow-[0_0_50px_rgba(0,212,255,0.1)]">
+                      <motion.div
+                        animate={{ 
+                          y: [0, -15, 0],
+                          rotate: [0, 5, -5, 0]
+                        }}
+                        transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+                        className="w-24 h-24 bg-[var(--neon-blue)]/10 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-[var(--neon-blue)] shadow-[0_0_30px_rgba(0,212,255,0.4)]"
+                      >
+                        <Box className="w-10 h-10 text-[var(--neon-blue)]" />
+                      </motion.div>
+                      
+                      <h2 className="text-4xl font-black italic uppercase text-white tracking-tighter mb-4 leading-none">
+                        ¡SOLICITUD <span className="text-[var(--neon-blue)]">CONFIRMADA!</span>
+                      </h2>
+                      <p className="text-gray-400 font-bold text-sm mb-10 max-w-sm mx-auto">
+                        Tus cartas han sido enviadas a producción. El equipo de PokeBox ya está preparando tu paquete premium.
+                      </p>
 
-                    <Card className="text-left mb-6">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="text-gray-500 mb-1">Número de pedido</div>
-                          <div className="text-white">{lastOrder.orderNumber}</div>
+                      <div className="grid grid-cols-2 gap-4 text-left mb-10">
+                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
+                          <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">ID Pedido</div>
+                          <div className="text-xs font-black text-white italic">{lastOrder.orderNumber}</div>
                         </div>
-                        <div>
-                          <div className="text-gray-500 mb-1">Estado</div>
-                          <div className="text-yellow-400 flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" /> Procesando
+                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
+                          <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Estado</div>
+                          <div className="text-xs font-black text-yellow-400 italic flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> PROCESANDO
                           </div>
                         </div>
-                        <div>
-                          <div className="text-gray-500 mb-1">Tracking</div>
-                          <div className="font-mono text-[var(--neon-blue)] text-xs">{lastOrder.trackingNumber}</div>
+                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
+                          <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Tracking</div>
+                          <div className="text-xs font-mono font-black text-[var(--neon-blue)] tracking-tight">{lastOrder.trackingNumber}</div>
                         </div>
-                        <div>
-                          <div className="text-gray-500 mb-1">Entrega estimada</div>
-                          <div className="text-white">{lastOrder.estimatedDelivery}</div>
+                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
+                          <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Estimación</div>
+                          <div className="text-xs font-black text-white italic">{lastOrder.estimatedDelivery}</div>
                         </div>
                       </div>
-                      <div className="mt-4 pt-4 border-t border-gray-800">
-                        <div className="text-gray-500 text-sm mb-1">Dirección</div>
-                        <div className="text-white text-sm">{lastOrder.address.fullName}</div>
-                        <div className="text-gray-400 text-sm">{lastOrder.address.address1}, {lastOrder.address.city}</div>
+
+                      <div className="flex flex-col gap-4">
+                        <Button variant="default" className="w-full py-6 rounded-2xl font-black italic uppercase tracking-wider" onClick={handleNewOrder}>
+                          SOLICITAR OTRO ENVÍO
+                        </Button>
+                        <button
+                          onClick={() => { setActiveTab('orders'); handleNewOrder(); }}
+                          className="w-full py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] hover:text-white transition-all flex items-center justify-center gap-2"
+                        >
+                          <History className="w-3.5 h-3.5" /> VER MI HISTORIAL DE ENVIOS
+                        </button>
                       </div>
                     </Card>
-
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <Button variant="default" onClick={handleNewOrder}>
-                        <PlusCircle className="w-4 h-4" /> Nuevo Pedido
-                      </Button>
-                      <Button variant="outline" onClick={() => { setActiveTab('orders'); handleNewOrder(); }}>
-                        <History className="w-4 h-4" /> Ver Mis Pedidos
-                      </Button>
-                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
