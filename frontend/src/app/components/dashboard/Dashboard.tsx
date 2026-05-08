@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Card } from '../ui/Card';
-import { User, Wallet, Package, Trophy, TrendingUp, Clock } from 'lucide-react';
+import { User, Package, Trophy, TrendingUp, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { PaymentModal } from '../payment/PaymentModal';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import pokecoinIcon from '../../../assets/Pokecoin.png';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -32,7 +33,7 @@ export function Dashboard() {
     { icon: Package, label: 'Cases Opened', value: '0', color: 'yellow' },
     { icon: Trophy, label: 'Battle Wins', value: '0', color: 'blue' },
     { icon: TrendingUp, label: 'Items Obtained', value: '0', color: 'purple' },
-    { icon: Wallet, label: 'Total Earnings', value: '$0', color: 'red' }
+    { icon: null, label: 'Total Earnings', value: '0', color: 'red', customIcon: pokecoinIcon }
   ];
   
   // Lista vacía por defecto
@@ -49,8 +50,8 @@ export function Dashboard() {
         >
           <Card>
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <div className="w-24 h-24 bg-gradient-to-br from-[var(--neon-yellow)] to-[var(--neon-blue)] rounded-full flex items-center justify-center">
-                <User className="w-12 h-12 text-black" />
+              <div className="w-24 h-24 bg-gradient-to-br from-[var(--neon-yellow)] to-[var(--neon-blue)] rounded-full flex items-center justify-center text-black font-bold text-4xl shadow-[0_0_20px_rgba(0,212,255,0.3)]">
+                {user.username.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h2 className="text-white mb-2">{user.username}</h2>
@@ -67,10 +68,13 @@ export function Dashboard() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-[var(--neon-yellow)] mb-2">Balance</div>
+                <div className="text-[var(--neon-yellow)] mb-2 flex items-center justify-center gap-2">
+                  <img src={pokecoinIcon} alt="PokéCoin" className="w-4 h-4 object-contain" />
+                  Balance
+                </div>
                 <div className="text-white mb-4 text-2xl font-bold">{user.balance.toLocaleString()} <span className="text-sm text-[var(--neon-yellow)]">PokéCoins</span></div>
                 <Button variant="default" size="sm" onClick={() => setShowPaymentModal(true)}>
-                  <Wallet className="w-4 h-4" />
+                  <img src={pokecoinIcon} alt="PokéCoin" className="w-4 h-4 object-contain mr-2" />
                   Add PokéCoins
                 </Button>
               </div>
@@ -111,12 +115,16 @@ export function Dashboard() {
                     stat.color === 'purple' ? 'bg-purple-500/20' :
                     'bg-red-500/20'
                   }`}>
-                    <Icon className={`w-7 h-7 ${
-                      stat.color === 'yellow' ? 'text-yellow-400' :
-                      stat.color === 'blue' ? 'text-blue-400' :
-                      stat.color === 'purple' ? 'text-purple-400' :
-                      'text-red-400'
-                    }`} />
+                    {Icon ? (
+                      <Icon className={`w-7 h-7 ${
+                        stat.color === 'yellow' ? 'text-yellow-400' :
+                        stat.color === 'blue' ? 'text-blue-400' :
+                        stat.color === 'purple' ? 'text-purple-400' :
+                        'text-red-400'
+                      }`} />
+                    ) : (
+                      <img src={stat.customIcon} alt="Icon" className="w-8 h-8 object-contain" />
+                    )}
                   </div>
                 </div>
               </Card>

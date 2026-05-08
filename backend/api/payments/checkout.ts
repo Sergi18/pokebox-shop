@@ -6,24 +6,42 @@ import pool from '../../lib/db';
 // POST /api/payments/checkout
 export async function createCheckoutSession(req: CheckoutSessionRequest): Promise<CheckoutSessionResponse> {
   try {
-    const { packageId, userId, email } = req;
+    console.log('Incoming checkout request:', req);
+    const { packageId, amount, userId, email } = req;
+    let name, description, unit_amount, pokecoins;
 
-    const package_ = POKECOIN_PACKAGES[packageId];
-    if (!package_) {
-      throw new Error(`Package ${packageId} not found`);
+    if (amount !== undefined && amount !== null && amount > 0) {
+      // Monto personalizado en Euros (Escala 1:1)
+      pokecoins = amount; 
+      unit_amount = amount * 100; // Stripe usa centavos (1€ = 100 centavos)
+      name = 'PokéCoin Pack';
+      description = `Purchase of ${amount} PokéCoins`;
+    } else if (packageId) {
+      // Paquete predefinido
+      const package_ = POKECOIN_PACKAGES[packageId];
+      if (!package_) {
+        throw new Error(`Package ${packageId} not found`);
+      }
+      pokecoins = package_.pokecoins + (package_.bonus || 0);
+      unit_amount = package_.price;
+      name = package_.name;
+      description = `${package_.pokecoins} PokéCoins${package_.bonus ? ` + ${package_.bonus} bonus` : ''}`;
+    } else {
+      throw new Error('No amount or packageId provided');
     }
 
+    // Crear sesión de checkout
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'eur',
             product_data: {
-              name: package_.name,
-              description: `${package_.pokecoins} PokéCoins${package_.bonus ? ` + ${package_.bonus} bonus` : ''}`,
+              name,
+              description,
             },
-            unit_amount: package_.price,
+            unit_amount,
           },
           quantity: 1,
         },
@@ -34,8 +52,8 @@ export async function createCheckoutSession(req: CheckoutSessionRequest): Promis
       customer_email: email,
       metadata: {
         userId,
-        packageId,
-        pokecoins: (package_.pokecoins + (package_.bonus || 0)).toString(),
+        packageId: packageId || 'custom',
+        pokecoins: pokecoins.toString(),
       },
     });
 
@@ -50,7 +68,6 @@ export async function createCheckoutSession(req: CheckoutSessionRequest): Promis
 }
 
 // GET /api/payments/session/:sessionId
-// Esta función ahora también actúa como fallback si el webhook falla en local
 export async function getCheckoutSession(sessionId: string) {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -80,7 +97,6 @@ async function processSuccessfulPayment(session: any) {
   try {
     await client.query('BEGIN');
 
-    // 1. Verificar si ya hemos procesado esta sesión para evitar duplicados
     const checkQuery = `
       SELECT id FROM public.transactions 
       WHERE metadata->>'stripe_session_id' = $1
@@ -90,7 +106,6 @@ async function processSuccessfulPayment(session: any) {
     if (checkResult.rows.length === 0) {
       console.log(`Processing manual verification for session ${session.id}`);
 
-      // 2. Actualizar balance
       const updateWalletQuery = `
         UPDATE public.wallets 
         SET balance = balance + $1, 
@@ -100,7 +115,6 @@ async function processSuccessfulPayment(session: any) {
       `;
       await client.query(updateWalletQuery, [pokecoins, amount, userId]);
 
-      // 3. Registrar transacción
       const insertTransactionQuery = `
         INSERT INTO public.transactions (user_id, amount, type, status, metadata)
         VALUES ($1, $2, 'deposit', 'completed', $3)
@@ -111,7 +125,7 @@ async function processSuccessfulPayment(session: any) {
         JSON.stringify({ 
           stripe_session_id: session.id,
           package_id: packageId,
-          usd_amount: amount,
+          eur_amount: amount,
           verified_via: 'session_check'
         })
       ]);

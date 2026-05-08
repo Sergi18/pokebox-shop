@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Zap, ShoppingBag, Sword, Trophy, HeadphonesIcon, User, LogOut, Wallet, Package, ArrowLeftRight, Truck, ArrowUp } from 'lucide-react';
+import { Zap, ShoppingBag, Sword, Trophy, HeadphonesIcon, User, LogOut, Package, ArrowLeftRight, Truck, ArrowUp } from 'lucide-react';
 import { Button } from '../ui/Button';
 import logo from 'figma:asset/6e863f4494a0b578dad3289d366d63fdcde5ae2f.png';
+import pokecoinIcon from '../../../assets/Pokecoin.png';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 
@@ -95,7 +96,7 @@ export function Header() {
               <>
                 {/* Balance Display */}
                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[var(--dark-hover)] border border-gray-700 rounded-lg">
-                  <Wallet className="w-4 h-4 text-[var(--neon-yellow)]" />
+                  <img src={pokecoinIcon} alt="PokéCoin" className="w-5 h-5 object-contain" />
                   <span className="text-white font-medium">{user.balance.toLocaleString()} <span className="text-[var(--neon-yellow)] text-xs">Coins</span></span>
                 </div>
                 
