@@ -48,7 +48,7 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     // Respuestas dinámicas basadas en la base de datos (Contexto del usuario)
     if (lowerInput.includes('mi balance') || lowerInput.includes('cuanto dinero tengo') || lowerInput.includes('cuánto dinero tengo')) {
       if (!isAuthenticated) return 'Necesitas iniciar sesión para ver tu balance.';
-      return `Tienes un balance actual de $${user?.balance?.toFixed(2)}. ¡Puedes usarlo en la sección de "Cases" para abrir nuevas cajas!`;
+      return `Tienes un balance actual de ${user?.balance?.toFixed(0)} PokeCoins. ¡Puedes usarlo en la sección de "Cases" para abrir nuevas cajas!`;
     }
 
     if (lowerInput.includes('mis cartas') || lowerInput.includes('mi inventario') || lowerInput.includes('cuantas cartas tengo') || lowerInput.includes('cuántas cartas tengo')) {
@@ -64,7 +64,7 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     }
 
     if (lowerInput.includes('vender') || lowerInput.includes('vende')) {
-      return 'Para vender tus cartas, debes ir a tu perfil de usuario. Allí podrás ver tu inventario personal y seleccionar las cartas que deseas poner a la venta.';
+      return 'Para vender tus cartas y ganar PokeCoins, debes ir a tu perfil de usuario. Allí podrás ver tu inventario personal y seleccionar las cartas que deseas vender.';
     }
 
     // Respuestas sobre secciones reales de la página
@@ -81,15 +81,19 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     }
 
     if (lowerInput.includes('reward') || lowerInput.includes('recompensa') || lowerInput.includes('premio')) {
-      return 'No olvides visitar la sección de "Rewards" para reclamar tus bonos diarios y premios por actividad.';
+      return 'No olvides visitar la sección de "Rewards" para reclamar tus bonos diarios y premios en PokeCoins por tu actividad.';
     }
 
     if (lowerInput.includes('upgrade') || lowerInput.includes('mejorar') || lowerInput.includes('subir')) {
       return 'En la sección "Upgrade" puedes intentar mejorar tus cartas actuales por otras de mayor rareza y valor.';
     }
 
+    if (lowerInput.includes('que cajas') || lowerInput.includes('nombres de cajas') || lowerInput.includes('lista de cajas') || lowerInput.includes('qué cajas')) {
+      return 'Actualmente tenemos estas cajas disponibles: Electric Starter, Fire Legend, Water Champion, Psychic Master, Dragon Elite, Grass Bundle, Ice Collection y Fighting Spirit. ¡Cada una tiene premios increíbles!';
+    }
+
     if (lowerInput.includes('donde') || lowerInput.includes('abrir') || lowerInput.includes('caja')) {
-      return 'La acción principal está en "Cases". Allí encontrarás todas nuestras cajas disponibles para abrir.';
+      return 'La acción principal está en "Cases". Allí encontrarás todas nuestras cajas disponibles para abrir usando tus PokeCoins.';
     }
 
     if (lowerInput.includes('mi nivel') || lowerInput.includes('que nivel soy')) {
@@ -101,8 +105,8 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       return isAuthenticated ? `¡Hola de nuevo, ${user?.username}! ¿En qué sección te gustaría que te ayude hoy?` : '¡Hola! Soy el asistente de PokeBox. ¿En qué puedo ayudarte hoy?';
     }
 
-    if (lowerInput.includes('pago') || lowerInput.includes('crédito') || lowerInput.includes('dinero')) {
-      return 'Aceptamos pagos seguros a través de Stripe. Puedes añadir créditos desde tu Dashboard personal.';
+    if (lowerInput.includes('pago') || lowerInput.includes('crédito') || lowerInput.includes('dinero') || lowerInput.includes('comprar')) {
+      return 'Aceptamos pagos seguros a través de Stripe. Puedes comprar más PokeCoins desde tu Dashboard personal.';
     }
 
     return 'Lo siento, no entiendo tu pregunta. ¿Puedes intentar reformularla? También puedes contactarnos por email en el formulario de soporte si necesitas ayuda humana.';
