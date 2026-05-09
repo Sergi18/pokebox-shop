@@ -6,10 +6,10 @@ import { useState } from 'react';
 import { useChat } from '../../context/ChatContext';
 
 const faqs = [
-  { question: 'How do I open a case?', answer: 'Navigate to the Cases page, select a case, and click the "Open Case" button. Make sure you have enough credits in your balance.' },
-  { question: 'How do battles work?', answer: 'In battles, you and your opponent open the same case simultaneously. The player who wins the higher value item wins the battle.' },
-  { question: 'How can I add credits?', answer: 'Click on "Add Credits" in your dashboard to purchase credits using various payment methods.' },
-  { question: 'Can I sell my items?', answer: 'Yes! Go to the Marketplace and list your items for sale. Other players can purchase them.' },
+  { question: '¿Cómo abro una caja?', answer: 'Ve a la página de Cajas, selecciona tu favorita y pulsa "ABRIR". ¡Asegúrate de tener suficientes monedas en tu cuenta!' },
+  { question: '¿Cómo funcionan las batallas?', answer: 'Dos jugadores abren la misma caja. El que obtenga el objeto de mayor valor se lleva todo el botín.' },
+  { question: '¿Cómo añado fondos?', answer: 'Visita tu Dashboard y selecciona "Añadir Monedas" para recargar tu saldo de forma segura.' },
+  { question: '¿Puedo vender mis cartas?', answer: '¡Claro! Dirígete al Marketplace para listar tus cartas y obtener monedas al instante.' },
 ];
 
 export function Support() {
@@ -22,143 +22,125 @@ export function Support() {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Support ticket submitted! We\'ll get back to you soon.');
+    alert('¡Ticket recibido! Nuestro equipo de soporte técnico se pondrá en contacto pronto.');
     setFormData({ email: '', subject: '', message: '' });
   };
   
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-6">
+    <div className="min-h-screen py-24 bg-[#0a0e1a]">
+      <div className="container mx-auto px-6 max-w-7xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
-          <h1 className="mb-4 bg-gradient-to-r from-[var(--neon-blue)] to-[var(--neon-yellow)] bg-clip-text text-transparent">
-            Support Center
+          <span className="px-3 py-1 bg-[var(--neon-blue)]/10 text-[var(--neon-blue)] text-[10px] font-black uppercase tracking-widest border border-[var(--neon-blue)]/30 rounded-full mb-4 inline-block">
+            SOPORTE PREMIUM
+          </span>
+          <h1 className="text-5xl font-black italic uppercase text-white tracking-tighter mb-4">
+            CENTRO DE <span className="text-[var(--neon-blue)]">AYUDA</span>
           </h1>
-          <p className="text-gray-400">
-            How can we help you today?
+          <p className="text-gray-500 font-medium max-w-xl mx-auto">
+            ¿Tienes alguna duda o problema? Estamos aquí las 24/7 para asistirte en todo lo que necesites.
           </p>
         </motion.div>
         
         {/* Quick Links */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-        >
-          <Card className="hover:border-[var(--neon-blue)] transition-all cursor-pointer group" onClick={() => {}}>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <HelpCircle className="w-8 h-8 text-blue-400" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+          {[
+            { icon: HelpCircle, title: 'FAQ', desc: 'Preguntas Frecuentes', color: 'blue' },
+            { icon: FileText, title: 'GUÍA', desc: 'Documentación Oficial', color: 'yellow' },
+            { icon: MessageCircle, title: 'LIVE CHAT', desc: 'Asistencia en vivo', color: 'purple', action: openChat }
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ y: -10 }}
+              onClick={item.action}
+              className="p-8 bg-[#131829] border-2 border-white/5 rounded-[2rem] hover:border-[var(--neon-blue)]/50 transition-all cursor-pointer group shadow-xl"
+            >
+              <div className={`w-16 h-16 bg-${item.color}-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-${item.color}-500/20 group-hover:shadow-[0_0_20px_rgba(var(--neon-${item.color}),0.3)]`}>
+                <item.icon className={`w-8 h-8 text-${item.color}-400`} />
               </div>
-              <h3 className="text-white mb-2 font-bold">FAQ</h3>
-              <p className="text-gray-400">Find quick answers</p>
-            </div>
-          </Card>
-          
-          <Card className="hover:border-[var(--neon-yellow)] transition-all cursor-pointer group" onClick={() => {}}>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <FileText className="w-8 h-8 text-yellow-400" />
-              </div>
-              <h3 className="text-white mb-2 font-bold">Documentation</h3>
-              <p className="text-gray-400">Learn how it works</p>
-            </div>
-          </Card>
-          
-          <Card 
-            className="hover:border-purple-500 transition-all cursor-pointer group" 
-            onClick={openChat}
-          >
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <MessageCircle className="w-8 h-8 text-purple-400" />
-              </div>
-              <h3 className="text-white mb-2 font-bold">Live Chat</h3>
-              <p className="text-gray-400">Chat with support</p>
-            </div>
-          </Card>
-        </motion.div>
+              <h3 className="text-white font-black italic uppercase text-center">{item.title}</h3>
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center mt-2">{item.desc}</p>
+            </motion.div>
+          ))}
+        </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* FAQ Section */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
           >
-            <h2 className="text-white mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-black italic uppercase text-white mb-8 flex items-center gap-3">
               <HelpCircle className="w-6 h-6 text-[var(--neon-blue)]" />
-              Frequently Asked Questions
+              PREGUNTAS FRECUENTES
             </h2>
             <div className="space-y-4">
               {faqs.map((faq, index) => (
-                <Card key={index} className="p-6">
-                  <h3 className="text-white mb-2 font-bold">{faq.question}</h3>
-                  <p className="text-gray-400">{faq.answer}</p>
-                </Card>
+                <div key={index} className="p-6 bg-[#131829] border-2 border-white/5 rounded-2xl hover:border-white/10 transition-colors">
+                  <h3 className="text-white font-bold italic mb-2 uppercase text-sm">{faq.question}</h3>
+                  <p className="text-gray-500 text-xs font-medium leading-relaxed">{faq.answer}</p>
+                </div>
               ))}
             </div>
           </motion.div>
           
           {/* Contact Form */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
           >
-            <h2 className="text-white mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-black italic uppercase text-white mb-8 flex items-center gap-3">
               <Mail className="w-6 h-6 text-[var(--neon-yellow)]" />
-              Contact Us
+              CONTACTA CON EL EQUIPO
             </h2>
-            <Card className="p-6">
+            <div className="p-8 bg-[#131829] border-2 border-white/5 rounded-[2rem]">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-white mb-2">Email</label>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Email</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-[var(--dark-hover)] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--neon-blue)] transition-colors"
-                    placeholder="your@email.com"
+                    className="w-full bg-black/40 border-2 border-white/5 rounded-xl px-4 py-4 text-white placeholder-gray-700 outline-none focus:border-[var(--neon-blue)] transition-all font-bold"
+                    placeholder="ejemplo@pokebox.com"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-white mb-2">Subject</label>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Asunto</label>
                   <input
                     type="text"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full bg-[var(--dark-hover)] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--neon-blue)] transition-colors"
-                    placeholder="How can we help?"
+                    className="w-full bg-black/40 border-2 border-white/5 rounded-xl px-4 py-4 text-white placeholder-gray-700 outline-none focus:border-[var(--neon-blue)] transition-all font-bold"
+                    placeholder="¿En qué podemos ayudarte?"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-white mb-2">Message</label>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Mensaje</label>
                   <textarea
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full bg-[var(--dark-hover)] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--neon-blue)] transition-colors resize-none"
-                    placeholder="Describe your issue..."
+                    className="w-full bg-black/40 border-2 border-white/5 rounded-xl px-4 py-4 text-white placeholder-gray-700 outline-none focus:border-[var(--neon-blue)] transition-all resize-none font-bold"
+                    placeholder="Escribe tu consulta detallada aquí..."
                     rows={6}
                     required
                   />
                 </div>
                 
-                <Button type="submit" variant="default" size="lg" className="w-full">
-                  <Send className="w-5 h-5" />
-                  Send Message
+                <Button type="submit" variant="default" size="lg" className="w-full py-7 rounded-2xl font-black italic uppercase text-lg shadow-[0_0_25px_rgba(0,212,255,0.2)]">
+                  <Send className="w-5 h-5 mr-2" />
+                  ENVIAR MENSAJE
                 </Button>
               </form>
-            </Card>
+            </div>
           </motion.div>
         </div>
       </div>
