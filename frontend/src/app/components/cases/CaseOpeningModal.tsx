@@ -31,6 +31,9 @@ export function CaseOpeningModal({ isOpen, onClose, item, caseName, availableIte
   const navigate = useNavigate();
   const [phase, setStep] = useState<'roulette' | 'result'>('roulette');
   const [rouletteItems, setRouletteItems] = useState<any[]>([]);
+  // Posición fija: 45 ítems (cada uno 192px + 16px gap = 208px) = 9360px.
+  // Ajuste para centrar el icono: necesitamos desplazar hasta el centro de la carta 45 (9360 + 96 = 9456px).
+  const finalOffset = -9456;
 
   // Generar items para la ruleta
   useEffect(() => {
@@ -38,7 +41,7 @@ export function CaseOpeningModal({ isOpen, onClose, item, caseName, availableIte
       setStep('roulette');
       
       const items = Array.from({ length: 50 }, (_, i) => {
-        if (i === 45) return item;
+        if (i === 45) return item; // Usamos el item real pasado por props
         const randomItem = availableItems[Math.floor(Math.random() * availableItems.length)];
         return {
           id: `fake_${i}`,
@@ -104,8 +107,7 @@ export function CaseOpeningModal({ isOpen, onClose, item, caseName, availableIte
                       {/* Moving Strip */}
                       <motion.div
                         initial={{ x: 0 }}
-                        // 45 items * (192px + 16px) = 9360px. Ajustamos para centrar.
-                        animate={{ x: '-9360px' }}
+                        animate={{ x: `${finalOffset}px` }}
                         transition={{ duration: 7, ease: [0.1, 0.7, 0.2, 1] }}
                         className="flex gap-4 w-max px-[50%]"
                       >
