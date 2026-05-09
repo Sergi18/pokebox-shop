@@ -37,6 +37,7 @@ function calcSuccessRate(inputValue: number, targetValue: number): number {
   return Math.round(Math.min(97, Math.max(1, raw)) * 1000) / 1000;
 }
 
+// ─── Componentes Visuales ───
 function SafeImage({ src, alt, className, rarityIcon }: { src?: string; alt: string; className?: string; rarityIcon: React.ReactNode }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -211,13 +212,13 @@ export function Upgrade() {
       targetAngle = successThreshold + 5 + Math.random() * (360 - successThreshold - 10);
     }
     
-    const itemsToSacrifice = [...selectedItems];
-    setSelectedItems([]);
-    await removeItems(itemsToSacrifice);
     setRollValue(targetAngle);
     setIsUpgrading(true);
 
     setTimeout(async () => {
+      const itemsToSacrifice = [...selectedItems];
+      setSelectedItems([]);
+      await removeItems(itemsToSacrifice);
       try {
         if (isSuccess) {
           await addItem({ name: selectedTarget.name, rarity: selectedTarget.rarity, value: selectedTarget.value, caseId: 0 });
