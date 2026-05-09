@@ -1,11 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Zap, ShoppingBag, Sword, Trophy, HeadphonesIcon, User, LogOut, Package, ArrowLeftRight, Truck } from 'lucide-react';
+import { Zap, ShoppingBag, Sword, Trophy, HeadphonesIcon, LogOut, Package, ArrowLeftRight, Truck } from 'lucide-react';
 import { Button } from '../ui/Button';
 import logo from 'figma:asset/6e863f4494a0b578dad3289d366d63fdcde5ae2f.png';
 import pokecoinIcon from '../../../assets/Pokecoin.png';
 import iconogengar from '../../../assets/iconogengar.webp';
 import iconobatalla from '../../../assets/iconobatalla.webp';
+import perfilIcon from '../../../assets/perfil.webp';
 import '../../styles/gengar-style.css';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
@@ -104,8 +105,8 @@ export function Header() {
                 </div>
                 <div className="relative" ref={menuRef}>
                   <motion.button whileHover={{ scale: 1.05 }} onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] text-black rounded-lg">
-                    <User className="w-4 h-4" />
-                    <span className="hidden sm:inline">{user.username}</span>
+                    <img src={perfilIcon} className="w-4 h-4 object-contain" alt="Profile" />
+                    <span className="hidden sm:inline font-bold">{user.username}</span>
                     <span className="text-xs bg-black/20 px-2 py-0.5 rounded">Lv.{user.level}</span>
                   </motion.button>
                   {showUserMenu && (
