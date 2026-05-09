@@ -131,7 +131,7 @@ export function CaseDetail() {
         name: selected.name,
         rarity: selected.rarity,
         value: parseFloat(selected.price || selected.value),
-        image: selected.image_url || selected.image
+        image: selected.image_url || selected.image || ''
       };
 
       await addToInventory(resultItem);
@@ -139,7 +139,7 @@ export function CaseDetail() {
 
       setOpenedItem(resultItem);
       setShowModal(true);
-      toast.success(`¡Has obtenido ${resultItem.name}!`);
+      // toast.success removed to prevent premature message
 
     } catch (error) {
       console.error('Error opening case:', error);
@@ -383,6 +383,7 @@ export function CaseDetail() {
         onClose={() => setShowModal(false)}
         item={openedItem}
         caseName={caseItem.name}
+        availableItems={caseItems}
       />
     </div>
   );

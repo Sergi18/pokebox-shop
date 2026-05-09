@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import type { Item } from '../../context/AuthContext';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { getRarityColor, getRarityGlow } from '../../utils/caseItems';
@@ -739,7 +740,7 @@ export function Delivery() {
                                   </div>
                                   <div className={`w-full aspect-[3/4] rounded-2xl bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-500 overflow-hidden relative ${getRarityGlow(item.rarity)}`}>
                                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                                    <span className="text-4xl relative z-10 group-hover:scale-125 transition-transform duration-500">{rarityEmoji[item.rarity]}</span>
+                                    <ImageWithFallback src={item.image || ''} alt={item.name} className="w-full h-full object-cover" />
                                   </div>
                                   <div className="text-[10px] font-black text-white uppercase italic tracking-tight truncate mb-1">{item.name}</div>
                                   <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">${item.value.toLocaleString()}</div>
