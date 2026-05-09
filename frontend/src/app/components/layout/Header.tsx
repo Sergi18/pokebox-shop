@@ -105,7 +105,16 @@ export function Header() {
                 </div>
                 <div className="relative" ref={menuRef}>
                   <motion.button whileHover={{ scale: 1.05 }} onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] text-black rounded-lg">
-                    <img src={perfilIcon} className="w-4 h-4 object-contain" alt="Profile" />
+                    {user.avatar_url ? (
+                      <img 
+                        src={user.avatar_url} 
+                        className="w-8 h-8 rounded-full object-cover border border-black/20" 
+                        alt="Profile" 
+                        onError={(e) => { (e.target as HTMLImageElement).src = perfilIcon; }} 
+                      />
+                    ) : (
+                      <img src={perfilIcon} className="w-5 h-5 object-contain" alt="Profile" />
+                    )}
                     <span className="hidden sm:inline font-bold">{user.username}</span>
                     <span className="text-xs bg-black/20 px-2 py-0.5 rounded">Lv.{user.level}</span>
                   </motion.button>

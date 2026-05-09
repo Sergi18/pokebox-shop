@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'motion/react';
-import { User, Package, Trophy, TrendingUp, Wallet, Zap, Target, PlusCircle, ArrowUpRight, ShieldCheck, RefreshCw, ShoppingBag, Sword } from 'lucide-react';
+import { motion } from 'motion/react';
+import { User, Package, Trophy, TrendingUp, Zap, Target, ArrowUpRight, ShieldCheck, RefreshCw, ShoppingBag, Sword } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { PaymentModal } from '../payment/PaymentModal';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import pokecoinIcon from '../../../assets/Pokecoin.png';
+import iconobatalla from '../../../assets/iconobatalla.webp';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -43,20 +44,17 @@ export function Dashboard() {
         
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
           <div className="bg-[#131829] border-2 border-purple-500/20 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
-            {/* Fondo Ambiental del Perfil */}
             <div 
               className="absolute inset-0 z-0 bg-cover bg-right bg-no-repeat opacity-40"
               style={{ backgroundImage: 'url(/src/assets/fondoperfil.webp)' }}
             />
             <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#131829]/80 via-[#131829]/50 to-transparent" />
 
-            {/* Decoration */}
             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none z-10">
               <User className="w-64 h-64 text-white" />
             </div>
 
             <div className="flex flex-col lg:flex-row items-center gap-12 relative z-10">
-              {/* Avatar Section */}
               <div className="relative">
                 <motion.div 
                   whileHover={{ rotate: 360 }}
@@ -73,7 +71,6 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Info Section */}
               <div className="flex-1 text-center lg:text-left">
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-4">
                   <h2 className="text-5xl font-black italic uppercase text-white tracking-tighter leading-none">{user.username}</h2>
@@ -108,7 +105,6 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Wallet Section */}
               <div className="lg:w-80 w-full">
                 <div className="bg-black/40 border-2 border-purple-500/10 rounded-[2.5rem] p-8 text-center relative overflow-hidden group">
                   <div className="absolute top-0 left-0 w-full h-1 bg-[var(--electric-purple)] opacity-50" />
@@ -167,7 +163,7 @@ export function Dashboard() {
             {[
               { label: 'Cajas', icon: ShoppingBag, path: '/cases', desc: 'Prueba tu suerte ahora' },
               { label: 'Colección', icon: Package, path: '/inventory', desc: 'Gestiona tu colección' },
-              { label: 'Batallas', icon: Sword, path: '/battles', desc: 'Compite contra otros' },
+              { label: 'Batallas', icon: 'custom', path: '/battles', desc: 'Compite contra otros' },
               { label: 'Recompensas', icon: Trophy, path: '/rewards', desc: 'Misiones diarias' },
             ].map((action) => (
               <button
@@ -176,7 +172,11 @@ export function Dashboard() {
                 className="bg-[#131829] border-2 border-purple-500/10 rounded-[2rem] p-6 text-left hover:border-purple-500/50 hover:bg-white/5 transition-all group flex flex-col items-center text-center"
               >
                 <div className={`p-4 bg-purple-900/10 rounded-2xl border border-purple-500/10 mb-4 group-hover:border-purple-500/50`}>
-                  <action.icon className="w-8 h-8 text-purple-300" />
+                  {action.icon === 'custom' ? (
+                    <img src={iconobatalla} className="w-8 h-8 object-contain" alt="Batallas" />
+                  ) : (
+                    <action.icon className="w-8 h-8 text-purple-300" />
+                  )}
                 </div>
                 <span className="text-lg font-black italic text-white uppercase mb-2">{action.label}</span>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{action.desc}</p>

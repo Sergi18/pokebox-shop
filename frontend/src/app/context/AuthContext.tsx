@@ -9,6 +9,7 @@ interface User {
   createdAt: string;
   balance: number;
   level: number;
+  avatar_url?: string;
 }
 
 export interface Item {
@@ -18,6 +19,7 @@ export interface Item {
   value: number;
   obtainedAt: string;
   caseId: number;
+  image?: string;
 }
 
 interface AuthContextType {
@@ -47,10 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [inventory, setInventory] = useState<Item[]>([]);
 
-  // Check for existing session on mount
   useEffect(() => {
     if (isSupabaseConfigured && supabase) {
-      // Use Supabase
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           fetchUserProfile(session.user.id);
@@ -74,24 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return () => subscription.unsubscribe();
     } else {
-      // Use localStorage fallback
-      const sessionToken = localStorage.getItem('pokebox_session');
-      if (sessionToken) {
-        const userId = sessionToken;
-        const users = JSON.parse(localStorage.getItem('pokebox_users') || '[]');
-        const foundUser = users.find((u: User) => u.id === userId);
-        if (foundUser) {
-          setUser(foundUser);
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem('pokebox_session');
-        }
-      }
       setLoading(false);
     }
   }, []);
 
-  // Load inventory when user changes
   useEffect(() => {
     if (user && isAuthenticated) {
       refreshInventory();
@@ -126,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: profileData.created_at,
           balance: parseFloat(walletData.balance),
           level: profileData.level,
+          avatar_url: profileData.avatar_url,
         });
         setIsAuthenticated(true);
       }
@@ -136,81 +123,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (
-    username: string,
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; message: string }> => {
+  const register = async (username: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
     try {
-      if (password.length < 6) {
-        return { success: false, message: 'Password must be at least 6 characters' };
-      }
-      if (username.length < 3 || username.length > 20) {
-        return { success: false, message: 'Username must be between 3 and 20 characters' };
-      }
+      if (password.length < 6) return { success: false, message: 'Password must be at least 6 characters' };
+      if (username.length < 3 || username.length > 20) return { success: false, message: 'Username must be between 3 and 20 characters' };
 
       if (isSupabaseConfigured && supabase) {
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: {
-              username: username,
-            },
-          },
+          options: { data: { username: username } },
         });
 
-        if (signUpError) {
-          if (signUpError.message.includes('already registered')) {
-            return { success: false, message: 'Email already registered' };
-          }
-          return { success: false, message: signUpError.message };
-        }
-
-        if (!authData.user) {
-          return { success: false, message: 'Registration failed. Please try again.' };
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        if (signUpError) return { success: false, message: signUpError.message };
+        if (!authData.user) return { success: false, message: 'Registration failed.' };
         return { success: true, message: 'Registration successful!' };
-      } else {
-        return { success: false, message: 'Supabase not configured' };
       }
+      return { success: false, message: 'Supabase not configured' };
     } catch (error) {
-      console.error('Registration error:', error);
       return { success: false, message: 'Registration failed.' };
     }
   };
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; message: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
     try {
       if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return { success: false, message: error.message };
         if (!data.user) return { success: false, message: 'Login failed.' };
-
         await fetchUserProfile(data.user.id);
         return { success: true, message: 'Login successful!' };
-      } else {
-        return { success: false, message: 'Supabase not configured' };
       }
+      return { success: false, message: 'Supabase not configured' };
     } catch (error) {
       return { success: false, message: 'Login error' };
     }
   };
 
   const logout = async () => {
-    if (isSupabaseConfigured && supabase) {
-      await supabase.auth.signOut();
-    }
+    if (isSupabaseConfigured && supabase) await supabase.auth.signOut();
     setUser(null);
     setIsAuthenticated(false);
     setInventory([]);
@@ -222,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profileUpdates: any = {};
       if (updates.level !== undefined) profileUpdates.level = updates.level;
       if (updates.username !== undefined) profileUpdates.username = updates.username;
+      if (updates.avatar_url !== undefined) profileUpdates.avatar_url = updates.avatar_url;
 
       if (Object.keys(profileUpdates).length > 0) {
         await supabase.from('profiles').update(profileUpdates).eq('id', user.id);
@@ -240,19 +192,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addToInventory = async (item: Omit<Item, 'id' | 'obtainedAt'>) => {
     if (!user || !supabase) return;
     try {
-      // 1. Buscar el ID real del Pokémon en el catálogo por su nombre
       const { data: itemData, error: itemError } = await supabase
         .from('pokemon_items')
         .select('id')
         .eq('name', item.name)
         .single();
 
-      if (itemError || !itemData) {
-        console.error('Item not found in catalog:', item.name);
-        throw new Error(`El item ${item.name} no existe en el catálogo de la base de datos.`);
-      }
+      if (itemError || !itemData) throw new Error('Item not found');
 
-      // 2. Insertar en user_inventory usando el ID real del catálogo
       const { error } = await supabase.from('user_inventory').insert({
         user_id: user.id,
         item_id: itemData.id,
@@ -263,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await refreshInventory();
     } catch (error) {
       console.error('Error adding to inventory:', error);
-      toast.error('No se pudo guardar la carta en tu inventario. Verifica el catálogo.');
+      toast.error('No se pudo guardar la carta en tu inventario.');
     }
   };
 
@@ -287,9 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         caseId: inv.item_id,
         image: inv.pokemon_items?.image_url,
       }));
-    } catch (error) {
-      return [];
-    }
+    } catch (error) { return []; }
   };
 
   const recordCaseOpening = async (caseId: number, caseName: string, item: Item) => {
@@ -303,9 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         client_seed: 'client_seed',
         nonce: 1
       });
-    } catch (error) {
-      console.error('Error recording opening:', error);
-    }
+    } catch (error) { console.error('Error recording opening:', error); }
   };
 
   const removeFromInventory = async (itemId: string) => {
@@ -313,9 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await supabase.from('user_inventory').delete().eq('id', itemId).eq('user_id', user.id);
       await refreshInventory();
-    } catch (error) {
-      console.error('Error removing:', error);
-    }
+    } catch (error) { console.error('Error removing:', error); }
   };
 
   const tradeItem = async (offeredItemId: string, newItem: Omit<Item, 'id' | 'obtainedAt'>) => {
@@ -330,35 +271,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const removeItems = async (itemIds: string[]) => {
     if (!user || !supabase || itemIds.length === 0) return;
-    
     try {
-      console.log('--- Iniciando sacrificio de cartas ---', itemIds);
-      
-      // 1. ELIMINAR DE LA UI AL INSTANTE (Optimista)
       setInventory(prev => prev.filter(item => !itemIds.includes(item.id)));
-
-      // 2. ELIMINAR DE LA BASE DE DATOS
-      const { error, status } = await supabase
-        .from('user_inventory')
-        .delete()
-        .in('id', itemIds)
-        .eq('user_id', user.id);
-
-      console.log('Respuesta Supabase (Borrado):', status);
-
-      if (error) {
-        console.error('Error al borrar de Supabase:', error);
-        // Si falla el borrado real, recuperamos las cartas en la UI
-        await refreshInventory();
-        throw error;
-      }
-      
+      const { error } = await supabase.from('user_inventory').delete().in('id', itemIds).eq('user_id', user.id);
+      if (error) { await refreshInventory(); throw error; }
       return { success: true };
-    } catch (error) {
-      console.error('Fallo crítico en el borrado:', error);
-      toast.error('Error de sincronización con el inventario.');
-      throw error;
-    }
+    } catch (error) { toast.error('Error de sincronización con el inventario.'); throw error; }
   };
 
   const addItem = async (item: Omit<Item, 'id' | 'obtainedAt'>) => {
@@ -368,22 +286,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
-        isAuthenticated,
-        loading,
-        login,
-        register,
-        logout,
-        updateUser,
-        addToInventory,
-        getInventory,
-        recordCaseOpening,
-        removeFromInventory,
-        tradeItem,
-        inventory,
-        refreshInventory,
-        removeItems,
-        addItem,
+        user, isAuthenticated, loading, login, register, logout,
+        updateUser, addToInventory, getInventory, recordCaseOpening,
+        removeFromInventory, tradeItem, inventory, refreshInventory,
+        removeItems, addItem,
       }}
     >
       {children}
