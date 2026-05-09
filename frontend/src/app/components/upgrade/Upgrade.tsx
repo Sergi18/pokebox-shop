@@ -137,23 +137,21 @@ function ProbabilityDial({
           <text x="100" y="105" textAnchor="middle" fill="white" fontSize="26" fontWeight="900" fontFamily="monospace" opacity="0.05">
             {rate.toFixed(1)}%
           </text>
-
-          {/* Needle / Arrow Indicator - CENTRADO ABSOLUTO */}
-          <motion.g
+          {/* Needle / Arrow Indicator - REDISEÑO PARA CENTRADO PERFECTO Y TAMAÑO EQUILIBRADO */}
+          <motion.path
+            d="M98 100 L100 35 L102 100 Z"
+            fill="white"
             initial={{ rotate: -90 }}
             animate={isUpgrading ? { rotate: 3600 + (rollValue || 0) * 3.6 - 90 } : { rotate: (rollValue || 0) * 3.6 - 90 }}
             transition={isUpgrading ? { duration: 4.5, ease: [0.22, 1, 0.36, 1] } : { duration: 0.5 }}
-            style={{ transformOrigin: "100px 100px" }}
-          >
-            <path 
-              d="M100 18 L105 100 L95 100 Z" 
-              fill="white" 
-              className="drop-shadow-[0_0_20px_rgba(255,255,255,1)]"
-            />
-            <circle cx="100" cy="100" r="6" fill="white" stroke="#00d4ff" strokeWidth="2" />
-            <circle cx="100" cy="100" r="12" fill="none" stroke="white" strokeWidth="1" opacity="0.2" />
-          </motion.g>
-        </svg>
+            style={{ originX: 0.5, originY: 1 }}
+            className="drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"
+          />
+
+{/* Eje Central Decorativo (Fijo) */}
+<circle cx="100" cy="100" r="6" fill="white" stroke="#00d4ff" strokeWidth="2" />
+<circle cx="100" cy="100" r="12" fill="none" stroke="white" strokeWidth="1" opacity="0.1" />
+</svg>
         
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 text-white">
           <ArrowBigDown className="w-8 h-8 fill-white animate-bounce" />
@@ -300,8 +298,8 @@ export function Upgrade() {
             </div>
             <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
               <span className="text-[10px] font-black text-gray-500 uppercase">Valor Invertido:</span>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-black text-[var(--neon-yellow)] italic">{totalValue}</span>
+              <div className="flex items-center gap-2 text-white">
+                <span className="text-2xl font-black text-[var(--neon-yellow)] italic">{totalValue.toLocaleString()}</span>
                 <img src={pokecoinIcon} alt="Coin" className="w-5 h-5" />
               </div>
             </div>
@@ -385,9 +383,9 @@ export function Upgrade() {
                           <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{card.rarity}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-black text-[var(--neon-yellow)] italic">{card.value}</span>
-                        <img src={pokecoinIcon} alt="Coin" className="w-3 h-3" />
+                      <div className="flex items-center gap-2 text-white">
+                        <span className="text-2xl font-black text-[var(--neon-yellow)] italic">{totalValue.toLocaleString()}</span>
+                        <img src={pokecoinIcon} alt="Coin" className="w-5 h-5" />
                       </div>
                     </button>
                   );
