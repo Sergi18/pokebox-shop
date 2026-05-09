@@ -166,7 +166,7 @@ export function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {[
               { label: 'Cajas', icon: ShoppingBag, path: '/cases', desc: 'Prueba tu suerte ahora' },
-              { label: 'Inventario', icon: Package, path: '/inventory', desc: 'Gestiona tu colección' },
+              { label: 'Colección', icon: Package, path: '/inventory', desc: 'Gestiona tu colección' },
               { label: 'Batallas', icon: Sword, path: '/battles', desc: 'Compite contra otros' },
               { label: 'Recompensas', icon: Trophy, path: '/rewards', desc: 'Misiones diarias' },
             ].map((action) => (
