@@ -119,7 +119,7 @@ export function CaseOpeningModal({ isOpen, onClose, item, caseName, availableIte
                               className={`w-48 h-64 rounded-3xl border-2 bg-black/40 flex flex-col items-center justify-center p-4 shrink-0 transition-all border-white/10`}
                             >
                               <div className={`w-full aspect-square rounded-2xl bg-gradient-to-br ${meta.g} opacity-40 flex items-center justify-center mb-4 overflow-hidden`}>
-                                <div className="text-4xl text-white">{meta.icon}</div>
+                                <ImageWithFallback src={rItem.image || ''} alt={rItem.name} className="w-full h-full object-contain" />
                               </div>
                               <div className={`text-[12px] font-black uppercase italic ${meta.tc} tracking-widest`}>{rItem.rarity}</div>
                             </div>

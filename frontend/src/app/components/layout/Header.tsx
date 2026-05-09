@@ -5,6 +5,8 @@ import { Button } from '../ui/Button';
 import logo from 'figma:asset/6e863f4494a0b578dad3289d366d63fdcde5ae2f.png';
 import pokecoinIcon from '../../../assets/Pokecoin.png';
 import iconogengar from '../../../assets/iconogengar.webp';
+import iconobatalla from '../../../assets/iconobatalla.webp';
+import '../../styles/gengar-style.css';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 
@@ -30,9 +32,17 @@ export function Header() {
     { path: '/cases', label: 'Cases', icon: ShoppingBag },
     { path: '/trade', label: 'Intercambio', icon: ArrowLeftRight },
     { path: '/delivery', label: 'Envío', icon: Truck },
-    { path: '/battles', label: 'Battles', icon: Sword },
+    { 
+      path: '/battles', 
+      label: 'Battles', 
+      customIcon: <img src={iconobatalla} className="w-4 h-4 object-contain" alt="Battles" /> 
+    },
     { path: '/rewards', label: 'Rewards', icon: Trophy },
-    { path: '/upgrade', label: 'MEJORA FANTASMAL', isSpecial: true },
+    { 
+      path: '/upgrade', 
+      label: 'MEJORA FANTASMAL', 
+      isSpecial: true 
+    },
     { path: '/support', label: 'Support', icon: HeadphonesIcon },
   ];
   
@@ -58,14 +68,15 @@ export function Header() {
               return (
                 <Link key={item.path} to={item.path}>
                   {item.isSpecial ? (
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className="relative px-5 py-2.5 rounded-2xl flex items-center gap-2 overflow-hidden group border border-purple-500/30 bg-[#131829]/50 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] transition-all duration-300"
-                    >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.2),transparent_70%)] animate-pulse opacity-50" />
-                      <img src={iconogengar} className="w-5 h-5 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] relative z-10" alt="Gengar" />
-                      <span className="font-black italic uppercase tracking-widest text-white/90 relative z-10 text-xs">{item.label}</span>
-                    </motion.div>
+                    <div className="gengar-aura mx-2">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="relative px-5 py-2.5 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-purple-500/30 text-white transition-all duration-300"
+                      >
+                        <img src={iconogengar} className="w-5 h-5 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] relative z-10" alt="Gengar" />
+                        <span className="font-bold tracking-tight text-white/90 relative z-10 text-xs">{item.label}</span>
+                      </motion.div>
+                    </div>
                   ) : (
                     <motion.div
                       whileHover={{ y: -2 }}
@@ -75,7 +86,7 @@ export function Header() {
                           : 'text-gray-300 hover:text-white hover:bg-[#131829]'
                       }`}
                     >
-                      <item.icon className="w-4 h-4" />
+                      {item.customIcon ? item.customIcon : <item.icon className="w-4 h-4" />}
                       <span>{item.label}</span>
                     </motion.div>
                   )}
