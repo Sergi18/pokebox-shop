@@ -28,22 +28,22 @@ export function Header() {
   }, [showUserMenu]);
   
   const navItems = [
-    { path: '/', label: 'Home', icon: Zap },
-    { path: '/cases', label: 'Cases', icon: ShoppingBag },
+    { path: '/', label: 'Inicio', icon: Zap },
+    { path: '/cases', label: 'Cajas', icon: ShoppingBag },
     { path: '/trade', label: 'Intercambio', icon: ArrowLeftRight },
     { path: '/delivery', label: 'Envío', icon: Truck },
     { 
       path: '/battles', 
-      label: 'Battles', 
-      customIcon: <img src={iconobatalla} className="w-4 h-4 object-contain" alt="Battles" /> 
+      label: 'Batallas', 
+      customIcon: <img src={iconobatalla} className="w-4 h-4 object-contain" alt="Batallas" /> 
     },
-    { path: '/rewards', label: 'Rewards', icon: Trophy },
+    { path: '/rewards', label: 'Recompensas', icon: Trophy },
     { 
       path: '/upgrade', 
       label: 'MEJORA FANTASMAL', 
       isSpecial: true 
     },
-    { path: '/support', label: 'Support', icon: HeadphonesIcon },
+    { path: '/support', label: 'Soporte', icon: HeadphonesIcon },
   ];
   
   const handleLogout = () => {
@@ -110,16 +110,16 @@ export function Header() {
                   </motion.button>
                   {showUserMenu && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute right-0 mt-2 w-48 bg-[#131829] border border-white/10 rounded-lg shadow-xl overflow-hidden">
-                      <Link to="/dashboard" onClick={() => setShowUserMenu(false)} className="block px-4 py-3 text-white hover:bg-[#1a2238]">Dashboard</Link>
-                      <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-red-400 hover:bg-[#1a2238] border-t border-white/10">Logout</button>
+                      <Link to="/dashboard" onClick={() => setShowUserMenu(false)} className="block px-4 py-3 text-white hover:bg-[#1a2238]">Panel</Link>
+                      <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-red-400 hover:bg-[#1a2238] border-t border-white/10">Cerrar Sesión</button>
                     </motion.div>
                   )}
                 </div>
               </>
             ) : (
               <>
-                <Link to="/login"><Button variant="ghost" size="sm">Login</Button></Link>
-                <Link to="/register"><Button variant="default" size="sm">Register</Button></Link>
+                <Link to="/login"><Button variant="ghost" size="sm">Iniciar Sesión</Button></Link>
+                <Link to="/register"><Button variant="default" size="sm">Registrarse</Button></Link>
               </>
             )}
           </div>
