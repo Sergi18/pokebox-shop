@@ -32,7 +32,7 @@ interface AuthContextType {
   getInventory: () => Promise<Item[]>;
   recordCaseOpening: (caseId: number, caseName: string, item: Item) => Promise<void>;
   removeFromInventory: (itemId: string) => Promise<void>;
-  tradeItem: (offeredItemId: string, newItem: Omit<Item, 'id' | 'obtainedAt'>, refund?: number) => Promise<void>;
+  tradeItem: (offeredItemId: string, newItem: Omit<Item, 'id' | 'obtainedAt'>) => Promise<void>;
   inventory: Item[];
   refreshInventory: () => Promise<void>;
   removeItems: (itemIds: string[]) => Promise<void>;
@@ -285,6 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         value: parseFloat(inv.pokemon_items?.price || '0'),
         obtainedAt: inv.obtained_at,
         caseId: inv.item_id,
+        image: inv.pokemon_items?.image_url,
       }));
     } catch (error) {
       return [];
@@ -317,30 +318,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const tradeItem = async (offeredItemId: string, newItem: Omit<Item, 'id' | 'obtainedAt'>, refund: number = 0) => {
-    if (!user || !supabase) return;
-    try {
-      // 1. Quitar carta ofrecida
-      await removeFromInventory(offeredItemId);
-      
-      // 2. Añadir nueva carta
-      await addToInventory(newItem);
-
-      // 3. Si hay reembolso, actualizar balance
-      if (refund > 0) {
-        const newBalance = user.balance + refund;
-        const { error } = await supabase
-          .from('wallets')
-          .update({ balance: newBalance })
-          .eq('user_id', user.id);
-        
-        if (error) throw error;
-        setUser({ ...user, balance: newBalance });
-      }
-    } catch (error) {
-      console.error('Error in tradeItem:', error);
-      throw error;
-    }
+  const tradeItem = async (offeredItemId: string, newItem: Omit<Item, 'id' | 'obtainedAt'>) => {
+    await removeFromInventory(offeredItemId);
+    await addToInventory(newItem);
   };
 
   const refreshInventory = async () => {
