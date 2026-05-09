@@ -328,9 +328,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItems = async (itemIds: string[]) => {
-    if (!user || !supabase) return;
-    await supabase.from('user_inventory').delete().in('id', itemIds).eq('user_id', user.id);
-    await refreshInventory();
+    if (!user || !supabase || itemIds.length === 0) return;
+    
+    try {
+      console.log('--- Iniciando sacrificio de cartas ---', itemIds);
+      
+      // 1. ELIMINAR DE LA UI AL INSTANTE (Optimista)
+      setInventory(prev => prev.filter(item => !itemIds.includes(item.id)));
+
+      // 2. ELIMINAR DE LA BASE DE DATOS
+      const { error, status } = await supabase
+        .from('user_inventory')
+        .delete()
+        .in('id', itemIds)
+        .eq('user_id', user.id);
+
+      console.log('Respuesta Supabase (Borrado):', status);
+
+      if (error) {
+        console.error('Error al borrar de Supabase:', error);
+        // Si falla el borrado real, recuperamos las cartas en la UI
+        await refreshInventory();
+        throw error;
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Fallo crítico en el borrado:', error);
+      toast.error('Error de sincronización con el inventario.');
+      throw error;
+    }
   };
 
   const addItem = async (item: Omit<Item, 'id' | 'obtainedAt'>) => {
