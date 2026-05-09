@@ -238,7 +238,7 @@ export function Upgrade() {
       <div className="container mx-auto px-6 max-w-[1600px] relative z-10">
         <div className="text-center mb-16">
           <h1 className="text-6xl font-black italic uppercase text-white tracking-tighter leading-none mb-4">
-            SISTEMA DE <span style={{ color: '#d8b4fe' }}>MEJORA FANTASMAL</span>
+            <span style={{ color: '#d8b4fe' }}>MEJORA FANTASMAL</span>
           </h1>
         </div>
         <div className="mb-20 relative h-[450px] w-full flex items-center justify-between px-12 lg:px-24">
@@ -265,7 +265,7 @@ export function Upgrade() {
                   className={`px-12 py-5 rounded-2xl font-black italic uppercase text-lg tracking-tight transition-all flex items-center justify-center gap-3 ${canUpgrade ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-700 grayscale cursor-not-allowed'}`}
                 >
                   {isUpgrading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                  {isUpgrading ? 'PROCESANDO' : 'MEJORAR'}
+                  {isUpgrading ? 'PROCESANDO' : 'MEJORA FANTASMAL'}
                 </motion.button>
               </div>
             </div>
@@ -282,61 +282,82 @@ export function Upgrade() {
             </AnimatePresence>
           </div>
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          <div className="bg-[#131829] border-2 border-white/5 rounded-[2.5rem] p-8 text-white">
-            <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between">
-              Mi Inventario <span className="text-purple-400">{inventory.length} disponibles</span>
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-              {inventory.map(item => {
-                const meta = getRarityMeta(item.rarity);
-                const isSelected = selectedItems.includes(item.id);
-                return (
-                  <motion.div key={item.id} whileHover={{ scale: 1.05 }} onClick={() => toggleItem(item.id)} className={`cursor-pointer rounded-2xl p-4 border-2 transition-all relative ${isSelected ? 'border-purple-400 bg-purple-400/10 shadow-lg' : 'border-white/5 bg-white/5 hover:border-white/10'}`}>
-                    <div className="aspect-square bg-black/20 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
-                      <SafeImage src={item.image} alt={item.name} className="w-[80%] h-[85%] object-contain" rarityIcon={meta.icon} />
+                  {/* Panel Inventario */}
+                  <div className="bg-[#131829] border-2 border-purple-500/20 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.05)]">
+                    {/* Humo/Niebla Espectral */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.1),transparent_70%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-5 pointer-events-none" />
+
+                    <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between relative z-10">
+                      Mi Inventario <span className="text-purple-400">{inventory.length} disponibles</span>
+                    </h3>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar relative z-10">
+                      {inventory.map(item => {
+                        const meta = getRarityMeta(item.rarity);
+                        const isSelected = selectedItems.includes(item.id);
+                        return (
+                          <motion.div
+                            key={item.id}
+                            whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(168,85,247,0.3)" }}
+                            onClick={() => toggleItem(item.id)}
+                            className={`cursor-pointer rounded-2xl p-4 border-2 transition-all relative overflow-hidden ${isSelected ? 'border-purple-400 bg-purple-900/20 shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'border-white/5 bg-white/5 hover:border-purple-500/30'}`}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
+                            <div className="aspect-square bg-black/40 rounded-xl mb-3 flex items-center justify-center overflow-hidden relative z-10">
+                              <SafeImage src={item.image} alt={item.name} className="w-[80%] h-[85%] object-contain" rarityIcon={meta.icon} />
+                            </div>
+                            <div className="text-[10px] font-black text-white uppercase italic truncate relative z-10">{item.name}</div>
+                            <div className="flex items-center gap-1 mt-1 text-white relative z-10">
+                              <span className="text-[10px] font-bold text-fuchsia-300 italic">{item.value.toLocaleString()}</span>
+                              <img src={pokecoinIcon} alt="Coin" className="w-3 h-3 opacity-60" />
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
-                    <div className="text-[10px] font-black text-white uppercase italic truncate">{item.name}</div>
-                    <div className="flex items-center gap-1 mt-1 text-white">
-                      <span className="text-[10px] font-bold text-fuchsia-300 italic">{item.value.toLocaleString()}</span>
-                      <img src={pokecoinIcon} alt="Coin" className="w-3 h-3 opacity-60" />
+
+                    <div className="mt-8 pt-6 border-t border-purple-500/20 flex items-center justify-between relative z-10">
+                      <span className="text-[10px] font-black text-gray-500 uppercase">Valor Invertido:</span>
+                      <div className="flex items-center gap-2 text-white">
+                        <span className="text-2xl font-black text-fuchsia-300 italic">{totalValue.toLocaleString()}</span>
+                        <img src={pokecoinIcon} alt="Coin" className="w-5 h-5" />
+                      </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-              <span className="text-[10px] font-black text-gray-500 uppercase">Valor Invertido:</span>
-              <div className="flex items-center gap-2 text-white">
-                <span className="text-2xl font-black text-fuchsia-300 italic">{totalValue.toLocaleString()}</span>
-                <img src={pokecoinIcon} alt="Coin" className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-[#131829] border-2 border-white/5 rounded-[2.5rem] p-8 text-white">
-            <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between">Catálogo de Premios</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-              {loadingCatalog ? (
-                <div className="col-span-full py-20 flex justify-center"><RefreshCw className="w-8 h-8 animate-spin text-purple-500" /></div>
-              ) : targetPool.filter(card => totalValue === 0 || card.value >= totalValue).map(card => {
-                  const meta = getRarityMeta(card.rarity);
-                  const isSelected = selectedTarget?.id === card.id;
-                  return (
-                    <motion.button key={card.id} whileHover={{ scale: 1.05 }} onClick={() => setSelectedTarget(card)} className={`text-left rounded-2xl p-4 border-2 transition-all relative ${isSelected ? 'border-purple-500 bg-purple-500/10 shadow-lg' : 'border-white/5 bg-white/5 hover:border-white/10'}`}>
-                      <div className="aspect-square bg-black/20 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
-                        <SafeImage src={card.image} alt={card.name} className="w-[80%] h-[85%] object-contain" rarityIcon={meta.icon} />
-                      </div>
-                      <div className="text-[10px] font-black text-white uppercase italic truncate">{card.name}</div>
-                      <div className="flex items-center gap-1 mt-1 text-white">
-                        <span className="text-[10px] font-bold text-fuchsia-300 italic">{card.value.toLocaleString()}</span>
-                        <img src={pokecoinIcon} alt="Coin" className="w-3 h-3 opacity-60" />
-                      </div>
-                    </motion.button>
-                  );
-                })}
-            </div>
-          </div>
-        </div>
+                  </div>
+
+                  {/* Panel Catálogo */}
+                  <div className="bg-[#131829] border-2 border-purple-500/20 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.05)]">
+                    {/* Humo/Niebla Espectral */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(168,85,247,0.1),transparent_70%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-5 pointer-events-none" />
+
+                    <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between relative z-10">Catálogo de Premios</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar relative z-10">
+                      {loadingCatalog ? (
+                        <div className="col-span-full py-20 flex justify-center"><RefreshCw className="w-8 h-8 animate-spin text-purple-500" /></div>
+                      ) : targetPool.filter(card => totalValue === 0 || card.value >= totalValue).map(card => {
+                          const meta = getRarityMeta(card.rarity);
+                          const isSelected = selectedTarget?.id === card.id;
+                          return (
+                            <motion.button key={card.id} whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(168,85,247,0.3)" }} onClick={() => setSelectedTarget(card)} className={`text-left rounded-2xl p-4 border-2 transition-all relative overflow-hidden ${isSelected ? 'border-purple-500 bg-purple-900/20 shadow-lg' : 'border-white/5 bg-white/5 hover:border-purple-500/30'}`}>
+                              <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/5 to-transparent" />
+                              <div className="aspect-square bg-black/40 rounded-xl mb-3 flex items-center justify-center overflow-hidden relative z-10">
+                                <SafeImage src={card.image} alt={card.name} className="w-[80%] h-[85%] object-contain" rarityIcon={meta.icon} />
+                              </div>
+                              <div className="text-[10px] font-black text-white uppercase italic truncate relative z-10">{card.name}</div>
+                              <div className="flex items-center gap-1 mt-1 text-white relative z-10">
+                                <span className="text-[10px] font-bold text-fuchsia-300 italic">{card.value.toLocaleString()}</span>
+                                <img src={pokecoinIcon} alt="Coin" className="w-3 h-3 opacity-60" />
+                              </div>
+                            </motion.button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
       </div>
       <ResultModal result={upgradeResult} onClose={() => setUpgradeResult(null)} />
     </div>
