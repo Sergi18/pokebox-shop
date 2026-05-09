@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
+import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 import { Mail, MessageCircle, HelpCircle, FileText, Send } from 'lucide-react';
 import { useState } from 'react';
+import { useChat } from '../../context/ChatContext';
 
 const faqs = [
   { question: 'How do I open a case?', answer: 'Navigate to the Cases page, select a case, and click the "Open Case" button. Make sure you have enough credits in your balance.' },
@@ -12,6 +13,7 @@ const faqs = [
 ];
 
 export function Support() {
+  const { openChat } = useChat();
   const [formData, setFormData] = useState({
     email: '',
     subject: '',
@@ -48,32 +50,35 @@ export function Support() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
         >
-          <Card hover glow="blue">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Card className="hover:border-[var(--neon-blue)] transition-all cursor-pointer group" onClick={() => {}}>
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <HelpCircle className="w-8 h-8 text-blue-400" />
               </div>
-              <h3 className="text-white mb-2">FAQ</h3>
+              <h3 className="text-white mb-2 font-bold">FAQ</h3>
               <p className="text-gray-400">Find quick answers</p>
             </div>
           </Card>
           
-          <Card hover glow="yellow">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Card className="hover:border-[var(--neon-yellow)] transition-all cursor-pointer group" onClick={() => {}}>
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <FileText className="w-8 h-8 text-yellow-400" />
               </div>
-              <h3 className="text-white mb-2">Documentation</h3>
+              <h3 className="text-white mb-2 font-bold">Documentation</h3>
               <p className="text-gray-400">Learn how it works</p>
             </div>
           </Card>
           
-          <Card hover glow="purple">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Card 
+            className="hover:border-purple-500 transition-all cursor-pointer group" 
+            onClick={openChat}
+          >
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <MessageCircle className="w-8 h-8 text-purple-400" />
               </div>
-              <h3 className="text-white mb-2">Live Chat</h3>
+              <h3 className="text-white mb-2 font-bold">Live Chat</h3>
               <p className="text-gray-400">Chat with support</p>
             </div>
           </Card>
@@ -92,8 +97,8 @@ export function Support() {
             </h2>
             <div className="space-y-4">
               {faqs.map((faq, index) => (
-                <Card key={index}>
-                  <h3 className="text-white mb-2">{faq.question}</h3>
+                <Card key={index} className="p-6">
+                  <h3 className="text-white mb-2 font-bold">{faq.question}</h3>
                   <p className="text-gray-400">{faq.answer}</p>
                 </Card>
               ))}
@@ -110,7 +115,7 @@ export function Support() {
               <Mail className="w-6 h-6 text-[var(--neon-yellow)]" />
               Contact Us
             </h2>
-            <Card>
+            <Card className="p-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-white mb-2">Email</label>
