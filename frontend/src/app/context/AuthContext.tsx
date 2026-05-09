@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -73,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return () => subscription.unsubscribe();
     } else {
-      // Use localStorage fallback (Keeping for dev flexibility, though schema is now DB-first)
+      // Use localStorage fallback
       const sessionToken = localStorage.getItem('pokebox_session');
       if (sessionToken) {
         const userId = sessionToken;
@@ -82,7 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (foundUser) {
           setUser(foundUser);
           setIsAuthenticated(true);
-          loadLocalInventory(userId);
         } else {
           localStorage.removeItem('pokebox_session');
         }
@@ -98,28 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isAuthenticated]);
 
-  const loadLocalInventory = (userId: string) => {
-    const allInventory = JSON.parse(localStorage.getItem('pokebox_inventory') || '[]');
-    const userItems = allInventory
-      .filter((item: any) => item.userId === userId)
-      .map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        rarity: item.rarity,
-        value: item.value,
-        obtainedAt: item.obtainedAt,
-        caseId: item.caseId,
-      }));
-    setInventory(userItems);
-  };
-
   const fetchUserProfile = async (userId: string) => {
     if (!supabase) return;
     
     try {
-      // En el nuevo esquema profesional:
-      // - Perfil está en 'profiles'
-      // - Saldo está en 'wallets'
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -168,8 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (isSupabaseConfigured && supabase) {
-        // Registro en Supabase Auth
-        // El trigger 'on_auth_user_created' se encargará de crear profiles y wallets automáticamente
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -191,23 +171,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { success: false, message: 'Registration failed. Please try again.' };
         }
 
-        // Esperamos un momento para que el trigger termine su trabajo y luego recuperamos el perfil
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        return { success: true, message: 'Registration successful! Please check your email to verify your account before logging in.' };
-      } else {
-        // Fallback LocalStorage
-        const newUser: User = {
-          id: `user_${Date.now()}`,
-          username,
-          email,
-          createdAt: new Date().toISOString(),
-          balance: 1000,
-          level: 1,
-        };
-        setUser(newUser);
-        setIsAuthenticated(true);
         return { success: true, message: 'Registration successful!' };
+      } else {
+        return { success: false, message: 'Supabase not configured' };
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -232,7 +200,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await fetchUserProfile(data.user.id);
         return { success: true, message: 'Login successful!' };
       } else {
-        // Fallback LocalStorage...
         return { success: false, message: 'Supabase not configured' };
       }
     } catch (error) {
@@ -273,24 +240,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addToInventory = async (item: Omit<Item, 'id' | 'obtainedAt'>) => {
     if (!user || !supabase) return;
     try {
-      // Se cambió 'inventory' por 'user_inventory' y nombres de campos
+      // 1. Buscar el ID real del Pokémon en el catálogo por su nombre
+      const { data: itemData, error: itemError } = await supabase
+        .from('pokemon_items')
+        .select('id')
+        .eq('name', item.name)
+        .single();
+
+      if (itemError || !itemData) {
+        console.error('Item not found in catalog:', item.name);
+        throw new Error(`El item ${item.name} no existe en el catálogo de la base de datos.`);
+      }
+
+      // 2. Insertar en user_inventory usando el ID real del catálogo
       const { error } = await supabase.from('user_inventory').insert({
         user_id: user.id,
-        item_id: item.caseId, // Usamos caseId como referencia temporal al catálogo si no hay item_id real aún
+        item_id: itemData.id,
         status: 'available'
       });
+      
       if (error) throw error;
       await refreshInventory();
     } catch (error) {
       console.error('Error adding to inventory:', error);
+      toast.error('No se pudo guardar la carta en tu inventario. Verifica el catálogo.');
     }
   };
 
   const getInventory = async (): Promise<Item[]> => {
     if (!user || !supabase) return [];
     try {
-      // Nota: Aquí se debería hacer un JOIN con pokemon_items, 
-      // pero para que la web funcione ahora mismo, simularemos los datos si la tabla items está vacía
       const { data, error } = await supabase
         .from('user_inventory')
         .select('*, pokemon_items(*)')
@@ -315,7 +294,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const recordCaseOpening = async (caseId: number, caseName: string, item: Item) => {
     if (!user || !supabase) return;
     try {
-      // Registrar el resultado en la tabla de auditoría profesional
       await supabase.from('game_results').insert({
         user_id: user.id,
         game_type: 'case',

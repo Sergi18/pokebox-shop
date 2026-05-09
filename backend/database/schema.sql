@@ -196,7 +196,33 @@ CREATE TABLE public.referrals (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 11. ÍNDICES PARA RENDIMIENTO
+-- 11. MODULO DE ENTREGAS (DELIVERIES)
+CREATE TABLE public.deliveries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  order_number TEXT UNIQUE NOT NULL,
+  status TEXT DEFAULT 'processing',
+  tracking_number TEXT,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  address1 TEXT NOT NULL,
+  address2 TEXT,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  postal_code TEXT NOT NULL,
+  country TEXT NOT NULL,
+  items JSONB NOT NULL, -- Lista de items enviados
+  estimated_delivery TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Políticas de Deliveries
+ALTER TABLE public.deliveries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own deliveries" ON public.deliveries FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own deliveries" ON public.deliveries FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 12. ÍNDICES PARA RENDIMIENTO
 CREATE INDEX idx_inventory_user ON public.user_inventory(user_id);
 CREATE INDEX idx_inventory_status ON public.user_inventory(status);
 CREATE INDEX idx_transactions_user ON public.transactions(user_id);

@@ -6,12 +6,13 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { getRarityColor, getRarityGlow } from '../../utils/caseItems';
 import { toast } from 'sonner';
+import { supabase } from '../../lib/supabase';
 import {
   Truck, Home, Package, CheckCircle, Clock, MapPin,
   Phone, Mail, User, Search, ChevronDown, Star,
   ArrowRight, RefreshCw, Box, ShieldCheck, Globe,
   Sparkles, History, PlusCircle, Info, ArrowLeft,
-  BadgeCheck, ExternalLink, Timer
+  BadgeCheck, ExternalLink, Timer, X
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -63,7 +64,7 @@ function generateTracking() {
 function estimatedDate() {
   const d = new Date();
   d.setDate(d.getDate() + 10 + Math.floor(Math.random() * 5));
-  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toISOString();
 }
 
 function getStatusInfo(status: DeliveryOrder['status']) {
@@ -76,22 +77,9 @@ function getStatusInfo(status: DeliveryOrder['status']) {
       return { label: 'Enviado', color: 'text-purple-400', bg: 'bg-purple-400/10 border-purple-400/30', icon: Truck };
     case 'delivered':
       return { label: 'Entregado', color: 'text-green-400', bg: 'bg-green-400/10 border-green-400/30', icon: CheckCircle };
+    default:
+      return { label: 'Desconocido', color: 'text-gray-400', bg: 'bg-gray-400/10 border-gray-400/30', icon: Info };
   }
-}
-
-function loadOrders(userId: string): DeliveryOrder[] {
-  if (typeof window === 'undefined') return [];
-  const all: DeliveryOrder[] = JSON.parse(localStorage.getItem('pokebox_delivery_orders') || '[]');
-  return all.filter(o => o.userId === userId).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-}
-
-function saveOrder(order: DeliveryOrder) {
-  if (typeof window === 'undefined') return;
-  const all: DeliveryOrder[] = JSON.parse(localStorage.getItem('pokebox_delivery_orders') || '[]');
-  all.push(order);
-  localStorage.setItem('pokebox_delivery_orders', JSON.stringify(all));
 }
 
 // ─── Input Field ──────────────────────────────────────────────────────────────
@@ -138,7 +126,7 @@ type DeliveryStep = 'select-cards' | 'shipping-info' | 'review' | 'success';
 const MAX_CARDS = 5;
 
 export function Delivery() {
-  const { user, isAuthenticated, getInventory } = useAuth();
+  const { user, isAuthenticated, getInventory, removeItems } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'new' | 'orders'>('new');
   const [inventory, setInventory] = useState<Item[]>([]);
@@ -180,9 +168,48 @@ export function Delivery() {
     try {
       const items = await getInventory();
       setInventory(items);
-      if (user) setOrders(loadOrders(user.id));
+      if (user) await fetchOrders();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrders = async () => {
+    if (!user || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('deliveries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedOrders: DeliveryOrder[] = (data || []).map(o => ({
+        id: o.id,
+        userId: o.user_id,
+        orderNumber: o.order_number,
+        status: o.status as any,
+        trackingNumber: o.tracking_number,
+        address: {
+          fullName: o.full_name,
+          email: o.email,
+          phone: o.phone,
+          address1: o.address1,
+          address2: o.address2,
+          city: o.city,
+          state: o.state,
+          postalCode: o.postal_code,
+          country: o.country
+        },
+        cards: o.items as Item[],
+        createdAt: o.created_at,
+        estimatedDelivery: o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Pendiente'
+      }));
+
+      setOrders(formattedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
     }
   };
 
@@ -224,26 +251,76 @@ export function Delivery() {
   };
 
   const handleSubmitOrder = async () => {
-    if (!user) return;
+    if (!user || !supabase) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 2000)); // simulate processing
-    const order: DeliveryOrder = {
-      id: `order_${Date.now()}`,
-      userId: user.id,
-      cards: selectedCards,
-      address: form,
-      status: 'processing',
-      trackingNumber: generateTracking(),
-      orderNumber: generateOrderNumber(),
-      createdAt: new Date().toISOString(),
-      estimatedDelivery: estimatedDate(),
-    };
-    saveOrder(order);
-    setLastOrder(order);
-    setOrders(prev => [order, ...prev]);
-    setStep('success');
-    setSubmitting(false);
-    toast.success('¡Solicitud de envío confirmada!');
+    
+    try {
+      const orderNumber = generateOrderNumber();
+      const trackingNumber = generateTracking();
+      const estDate = estimatedDate();
+
+      // 1. Guardar el pedido en Supabase
+      const { data: orderData, error: orderError } = await supabase
+        .from('deliveries')
+        .insert({
+          user_id: user.id,
+          order_number: orderNumber,
+          status: 'processing',
+          tracking_number: trackingNumber,
+          full_name: form.fullName,
+          email: form.email,
+          phone: form.phone,
+          address1: form.address1,
+          address2: form.address2,
+          city: form.city,
+          state: form.state,
+          postal_code: form.postalCode,
+          country: form.country,
+          items: selectedCards,
+          estimated_delivery: estDate
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Retirar los items del inventario (marcar como 'withdrawn')
+      // En lugar de borrar, actualizamos su estado para auditoría
+      const itemIds = selectedCards.map(c => c.id);
+      const { error: inventoryError } = await supabase
+        .from('user_inventory')
+        .update({ status: 'withdrawn' })
+        .in('id', itemIds);
+
+      if (inventoryError) throw inventoryError;
+
+      // 3. Actualizar estado local
+      const newOrder: DeliveryOrder = {
+        id: orderData.id,
+        userId: user.id,
+        cards: selectedCards,
+        address: form,
+        status: 'processing',
+        trackingNumber: trackingNumber,
+        orderNumber: orderNumber,
+        createdAt: orderData.created_at,
+        estimatedDelivery: new Date(estDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }),
+      };
+
+      setLastOrder(newOrder);
+      setOrders(prev => [newOrder, ...prev]);
+      setStep('success');
+      toast.success('¡Solicitud de envío confirmada!');
+      
+      // Limpiar inventario local
+      await removeItems(itemIds); 
+      
+    } catch (error: any) {
+      console.error('Error submitting order:', error);
+      toast.error(`Error al procesar el envío: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleNewOrder = () => {
@@ -278,7 +355,7 @@ export function Delivery() {
     <div className="min-h-screen py-24 bg-[#0a0e1a]">
       <div className="container mx-auto px-6 max-w-7xl">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <div className="flex items-center gap-3 mb-4">
@@ -323,14 +400,14 @@ export function Delivery() {
           </motion.div>
         </div>
 
-        {/* ── Info Features ── */}
+        {/* Info Features */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {[
-            { icon: ShieldCheck, label: 'Calidad Premium', desc: 'Papel holográfico de 350g', color: 'blue' },
-            { icon: Truck, label: 'Envío Express', desc: 'Embalaje ultra-protegido', color: 'purple' },
-            { icon: Globe, label: 'Global Delivery', desc: 'Envíos a todo el mundo', color: 'emerald' },
-            { icon: Timer, label: 'Trackeable', desc: 'Seguimiento en tiempo real', color: 'yellow' },
-          ].map(({ icon: Icon, label, desc, color }) => (
+            { icon: ShieldCheck, label: 'Calidad Premium', desc: 'Papel holográfico de 350g' },
+            { icon: Truck, label: 'Envío Express', desc: 'Embalaje ultra-protegido' },
+            { icon: Globe, label: 'Global Delivery', desc: 'Envíos a todo el mundo' },
+            { icon: Timer, label: 'Trackeable', desc: 'Seguimiento en tiempo real' },
+          ].map(({ icon: Icon, label, desc }) => (
             <motion.div 
               key={label}
               whileHover={{ y: -5 }}
@@ -347,11 +424,15 @@ export function Delivery() {
           ))}
         </div>
 
-        {/* ════════════════════════ CONTENT AREA ═══════════════════════ */}
+        {/* CONTENT AREA */}
         <AnimatePresence mode="wait">
           {activeTab === 'orders' && (
             <motion.div key="orders-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              {orders.length === 0 ? (
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <RefreshCw className="w-8 h-8 animate-spin text-[var(--neon-blue)]" />
+                </div>
+              ) : orders.length === 0 ? (
                 <Card className="border-2 border-dashed border-white/10 bg-transparent py-20">
                   <div className="text-center">
                     <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -396,7 +477,7 @@ export function Delivery() {
                                 <div>
                                   <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">Cartas en este envío</p>
                                   <div className="flex flex-wrap gap-2">
-                                    {order.cards.map(card => (
+                                    {(order.cards || []).map(card => (
                                       <div
                                         key={card.id}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 transition-all cursor-default group`}
@@ -503,7 +584,7 @@ export function Delivery() {
             </motion.div>
           )}
 
-          {/* ════════════════════════ NEW ORDER TAB ═══════════════════════════ */}
+          {/* NEW ORDER TAB */}
           {activeTab === 'new' && (
             <motion.div key="new-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
 
@@ -544,7 +625,7 @@ export function Delivery() {
                 </div>
               )}
 
-              {/* ─── STEP 1: Select Cards ─────────────────────────────────── */}
+              {/* STEP 1: Select Cards */}
               <AnimatePresence mode="wait">
                 {step === 'select-cards' && (
                   <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
@@ -618,10 +699,7 @@ export function Delivery() {
                       <div className="lg:col-span-3">
                         {loading ? (
                           <div className="flex flex-col items-center justify-center py-20">
-                            <div className="relative w-16 h-16">
-                              <div className="absolute inset-0 border-4 border-white/5 rounded-full" />
-                              <div className="absolute inset-0 border-4 border-[var(--neon-blue)] border-t-transparent rounded-full animate-spin" />
-                            </div>
+                            <RefreshCw className="w-10 h-10 animate-spin text-[var(--neon-blue)]" />
                             <p className="text-gray-500 font-black italic uppercase tracking-widest mt-6">Escaneando Inventario...</p>
                           </div>
                         ) : filteredInventory.length === 0 ? (
@@ -688,7 +766,7 @@ export function Delivery() {
                   </motion.div>
                 )}
 
-                {/* ─── STEP 2: Shipping Info ───────────────────────────────── */}
+                {/* STEP 2: Shipping Info */}
                 {step === 'shipping-info' && (
                   <motion.div key="step2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -816,7 +894,7 @@ export function Delivery() {
                   </motion.div>
                 )}
 
-                {/* ─── STEP 3: Review & Confirm ────────────────────────────── */}
+                {/* STEP 3: Review & Confirm */}
                 {step === 'review' && (
                   <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
                     <div className="max-w-3xl mx-auto">
@@ -829,7 +907,6 @@ export function Delivery() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                          {/* Left: Summary */}
                           <div className="space-y-8">
                             <section>
                               <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -861,7 +938,6 @@ export function Delivery() {
                             </section>
                           </div>
 
-                          {/* Right: Address */}
                           <div>
                             <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                               <MapPin className="w-3 h-3" /> Datos de Recepción
@@ -921,7 +997,7 @@ export function Delivery() {
                   </motion.div>
                 )}
 
-                {/* ─── SUCCESS ─────────────────────────────────────────────── */}
+                {/* SUCCESS */}
                 {step === 'success' && lastOrder && (
                   <motion.div
                     key="success"

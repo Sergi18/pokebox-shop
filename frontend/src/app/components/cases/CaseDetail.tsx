@@ -2,132 +2,69 @@ import { motion } from 'motion/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { ArrowLeft, Zap, Star, Gift } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Zap, Star, Gift, Loader2, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { CaseOpeningModal } from './CaseOpeningModal';
 import { generateRandomItem } from '../../utils/caseItems';
 import { toast } from 'sonner';
-import fireLegendBox from 'figma:asset/9ec76398309a55ad6c038687fb265739b33249d1.png';
-import aquaBox from 'figma:asset/a014c295a4dcea3753600c4a6c664a9ce162dcd3.png';
-import forestBox from 'figma:asset/5e0c1ee4f63b7569a0a9fa8da13d032b3aa3ec7b.png';
-import natureBox from 'figma:asset/8ee16956421ef7e0637c1c60c1217bc723ef217d.png';
-import blastoiseCard from 'figma:asset/cf34049cc11b36cdcad8ff7a5531e03368aaf7db.png';
+import { supabase } from '../../lib/supabase';
 
-const cases = [
-  { 
-    id: 1, 
-    name: 'Electric Starter', 
-    price: 199, 
-    rarity: 'Common', 
-    category: 'Starter', 
-    color: 'yellow', 
-    image: null, 
-    featuredCard: null,
-    description: 'Perfect for beginners looking to start their collection with electric-themed items.',
-    dropRate: '15%'
-  },
-  { 
-    id: 2, 
-    name: 'Fire Legend', 
-    price: 499, 
-    rarity: 'Mythic', 
-    category: 'Legend', 
-    color: 'red', 
-    image: fireLegendBox, 
-    featuredCard: null,
-    description: 'Unleash the power of fire with this legendary collection of rare items.',
-    dropRate: '25%'
-  },
-  { 
-    id: 3, 
-    name: 'Water Champion', 
-    price: 999, 
-    rarity: 'Legendary', 
-    category: 'Champion', 
-    color: 'blue', 
-    image: aquaBox, 
-    featuredCard: blastoiseCard,
-    description: 'Dive into the depths and discover powerful water-type treasures. Features exclusive Blastoise card!',
-    dropRate: '30%'
-  },
-  { 
-    id: 4, 
-    name: 'Psychic Master', 
-    price: 1999, 
-    rarity: 'Legendary', 
-    category: 'Master', 
-    color: 'purple', 
-    image: null, 
-    featuredCard: null,
-    description: 'Unlock the mysteries of the mind with psychic-powered collectibles.',
-    dropRate: '20%'
-  },
-  { 
-    id: 5, 
-    name: 'Dragon Elite', 
-    price: 4999, 
-    rarity: 'Epic', 
-    category: 'Elite', 
-    color: 'yellow', 
-    image: null, 
-    featuredCard: null,
-    description: 'The ultimate collection for dragon trainers seeking the most powerful items.',
-    dropRate: '35%'
-  },
-  { 
-    id: 6, 
-    name: 'Grass Bundle', 
-    price: 299, 
-    rarity: 'Epic', 
-    category: 'Bundle', 
-    color: 'blue', 
-    image: forestBox, 
-    featuredCard: null,
-    description: 'Nature-inspired items perfect for collectors who love the great outdoors.',
-    dropRate: '18%'
-  },
-  { 
-    id: 7, 
-    name: 'Ice Collection', 
-    price: 799, 
-    rarity: 'Rare', 
-    category: 'Collection', 
-    color: 'blue', 
-    image: natureBox, 
-    featuredCard: null,
-    description: 'Cool down with this frosty collection of ice-themed treasures.',
-    dropRate: '22%'
-  },
-  { 
-    id: 8, 
-    name: 'Fighting Spirit', 
-    price: 1299, 
-    rarity: 'Rare', 
-    category: 'Spirit', 
-    color: 'red', 
-    image: null, 
-    featuredCard: null,
-    description: 'Embrace the warrior spirit with powerful fighting-type items.',
-    dropRate: '28%'
-  },
-];
+// Los IDs de las cajas y sus imágenes visuales se mantienen, pero el precio vendrá de la DB
+const CASE_VISUALS: Record<number, any> = {
+  1: { color: 'yellow', icon: Zap, image: null },
+  2: { color: 'red', icon: Star, image: null }, // Se cargará de la DB si existe
+  3: { color: 'blue', icon: Gift, image: null },
+};
 
 export function CaseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, updateUser, addToInventory, recordCaseOpening } = useAuth();
+  
+  const [loading, setLoading] = useState(true);
+  const [caseItem, setCaseItem] = useState<any>(null);
   const [isOpening, setIsOpening] = useState(false);
   const [openedItem, setOpenedItem] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  const caseItem = cases.find(c => c.id === Number(id));
+
+  useEffect(() => {
+    fetchCaseDetails();
+  }, [id]);
+
+  const fetchCaseDetails = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('*')
+        .eq('id', Number(id))
+        .single();
+
+      if (error) throw error;
+      setCaseItem(data);
+    } catch (error) {
+      console.error('Error fetching case:', error);
+      toast.error('No se pudo cargar la información de la caja');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-[var(--neon-blue)]" />
+      </div>
+    );
+  }
 
   if (!caseItem) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card>
-          <h2 className="mb-4">Case not found</h2>
-          <Button onClick={() => navigate('/cases')}>Back to Cases</Button>
+          <h2 className="mb-4">Caja no encontrada</h2>
+          <Button onClick={() => navigate('/cases')}>Volver a Cajas</Button>
         </Card>
       </div>
     );
@@ -135,26 +72,26 @@ export function CaseDetail() {
 
   const handleOpenCase = async () => {
     if (!isAuthenticated || !user) {
-      toast.error('Please login to open cases');
+      toast.error('Inicia sesión para abrir cajas');
       navigate('/login');
       return;
     }
 
     if (user.balance < caseItem.price) {
-      toast.error('Insufficient balance');
+      toast.error('Saldo insuficiente');
       return;
     }
 
     setIsOpening(true);
 
     try {
-      // Deduct balance
+      // 1. Descontar saldo
       await updateUser({ balance: user.balance - caseItem.price });
 
-      // Generate random item
+      // 2. Generar item aleatorio (lógica local por ahora)
       const item = generateRandomItem(caseItem.id);
       
-      // Add to inventory and record opening
+      // 3. Guardar en inventario real de Supabase
       await addToInventory({
         name: item.name,
         rarity: item.rarity,
@@ -162,178 +99,142 @@ export function CaseDetail() {
         caseId: caseItem.id,
       });
 
+      // 4. Registrar en historial
       await recordCaseOpening(caseItem.id, caseItem.name, item);
 
-      // Show opening modal
+      // 5. Mostrar modal
       setOpenedItem(item);
       setShowModal(true);
       
-      toast.success(`You opened ${caseItem.name}!`);
+      toast.success(`¡Has abierto la caja ${caseItem.name}!`);
     } catch (error) {
       console.error('Error opening case:', error);
-      toast.error('Failed to open case. Please try again.');
+      toast.error('Fallo al abrir la caja. Inténtalo de nuevo.');
     } finally {
       setIsOpening(false);
     }
   };
 
+  const visual = CASE_VISUALS[caseItem.id] || { color: 'blue', icon: Zap, image: null };
+
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-6">
-        {/* Back Button */}
+    <div className="min-h-screen py-20 bg-[#0a0e1a]">
+      <div className="container mx-auto px-6 max-w-7xl">
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={() => navigate('/cases')}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-12 uppercase font-black italic tracking-widest text-xs"
         >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Cases
+          <ArrowLeft className="w-4 h-4" />
+          VOLVER A LAS CAJAS
         </motion.button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column - Case Image */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* Left Column - Image */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
           >
-            <Card>
-              <div className="aspect-square bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl flex items-center justify-center relative overflow-hidden mb-6">
-                {caseItem.image ? (
-                  <motion.img 
-                    src={caseItem.image} 
-                    alt={caseItem.name}
-                    className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                  />
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-gradient-to-br from-[var(--neon-blue)] to-purple-600 rounded-[3rem] opacity-20 blur-2xl group-hover:opacity-30 transition-opacity" />
+              <div className="relative bg-[#131829] border-2 border-white/5 rounded-[3rem] p-12 aspect-square flex items-center justify-center overflow-hidden">
+                {caseItem.image_url ? (
+                  <img src={caseItem.image_url} alt={caseItem.name} className="w-full h-full object-contain" />
                 ) : (
-                  <>
-                    <motion.div
-                      animate={{
-                        rotate: [0, 360],
-                      }}
-                      transition={{
-                        duration: 20,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                      className="absolute inset-0 bg-gradient-to-br from-[var(--neon-yellow)] via-transparent to-[var(--neon-blue)] opacity-20"
-                    />
-                    <Zap className="w-32 h-32 text-[var(--neon-yellow)]" />
-                  </>
+                  <motion.div
+                    animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Zap className="w-48 h-48 text-[var(--neon-yellow)] opacity-40 blur-[1px]" />
+                  </motion.div>
                 )}
               </div>
-
-              {/* Featured Card Section */}
-              {caseItem.featuredCard && (
-                <div className="mt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Star className="w-5 h-5 text-[var(--neon-yellow)]" />
-                    <h3 className="text-xl">Featured Item</h3>
-                  </div>
-                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-[var(--neon-blue)]">
-                    <motion.img 
-                      src={caseItem.featuredCard}
-                      alt="Featured Card"
-                      className="w-full rounded-lg"
-                      whileHover={{ scale: 1.05, rotate: 2 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                </div>
-              )}
-            </Card>
+            </div>
           </motion.div>
 
-          {/* Right Column - Case Details */}
+          {/* Right Column - Details */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-6"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-10"
           >
-            {/* Header */}
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <h1 className="bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] bg-clip-text text-transparent">
-                  {caseItem.name}
+              <div className="flex items-center gap-4 mb-6">
+                <h1 className="text-6xl font-black italic uppercase text-white tracking-tighter leading-none">
+                  {caseItem.name.split(' ')[0]} <br/>
+                  <span className="text-[var(--neon-blue)]">{caseItem.name.split(' ').slice(1).join(' ')}</span>
                 </h1>
-                <span className={`px-3 py-1 rounded-full text-sm ${
-                  caseItem.rarity === 'Mythic' ? 'bg-yellow-500/20 text-yellow-400' :
-                  caseItem.rarity === 'Legendary' ? 'bg-purple-500/20 text-purple-400' :
-                  caseItem.rarity === 'Epic' ? 'bg-blue-500/20 text-blue-400' :
-                  caseItem.rarity === 'Rare' ? 'bg-red-500/20 text-red-400' :
-                  'bg-gray-500/20 text-gray-400'
-                }`}>
-                  {caseItem.rarity}
+                <span className="px-4 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                  {caseItem.category}
                 </span>
               </div>
-              <p className="text-gray-400 text-lg">{caseItem.description}</p>
+              <p className="text-gray-400 text-xl font-medium leading-relaxed">
+                Desbloquea los secretos de la caja {caseItem.name}. Contiene objetos exclusivos con probabilidad garantizada.
+              </p>
             </div>
 
             {/* Stats */}
-            <Card>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-[var(--dark-hover)] rounded-lg">
-                  <div className="text-3xl mb-2 text-[var(--neon-yellow)]">{caseItem.price}</div>
-                  <div className="text-gray-400 text-sm">PokéCoins</div>
-                </div>
-                <div className="text-center p-4 bg-[var(--dark-hover)] rounded-lg">
-                  <div className="text-3xl mb-2 text-[var(--neon-blue)]">{caseItem.dropRate}</div>
-                  <div className="text-gray-400 text-sm">Rare Drop Rate</div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-[#131829] border-2 border-white/5 p-8 rounded-[2rem] text-center group hover:border-[var(--neon-yellow)]/30 transition-all">
+                <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-3">Coste de Apertura</div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-4xl font-black italic text-white tracking-tighter">{caseItem.price}</span>
+                  <img src="/src/assets/Pokecoin.png" alt="Coin" className="w-8 h-8" />
                 </div>
               </div>
-            </Card>
+              <div className="bg-[#131829] border-2 border-white/5 p-8 rounded-[2rem] text-center group hover:border-[var(--neon-blue)]/30 transition-all">
+                <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-3">Prob. Drop Raro</div>
+                <div className="text-4xl font-black italic text-[var(--neon-blue)] tracking-tighter">25%</div>
+              </div>
+            </div>
 
             {/* Features */}
-            <Card>
-              <h3 className="mb-4 text-xl">Case Features</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-gray-300">
-                  <Gift className="w-5 h-5 text-[var(--neon-yellow)]" />
-                  <span>Multiple rare items guaranteed</span>
+            <div className="space-y-4">
+              {[
+                { icon: Gift, text: 'Múltiples objetos raros garantizados' },
+                { icon: Star, text: 'Posibilidad de drops Legendarios' },
+                { icon: Zap, text: 'Animación de revelado instantáneo' }
+              ].map((f, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl group hover:bg-white/10 transition-colors">
+                  <div className="p-2 bg-black/20 rounded-lg text-[var(--neon-yellow)]">
+                    <f.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-gray-300 font-bold uppercase italic text-sm tracking-tight">{f.text}</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <Star className="w-5 h-5 text-[var(--neon-yellow)]" />
-                  <span>Chance for legendary drops</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <Zap className="w-5 h-5 text-[var(--neon-yellow)]" />
-                  <span>Instant reveal animation</span>
-                </div>
-              </div>
-            </Card>
+              ))}
+            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
-              <Button 
-                variant="default" 
-                className="flex-1"
+            <div className="flex gap-4 pt-6">
+              <motion.button 
+                whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(0,212,255,0.3)" }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleOpenCase}
                 disabled={isOpening || !isAuthenticated || (user && user.balance < caseItem.price)}
+                className="flex-1 py-6 bg-[var(--neon-blue)] text-black font-black italic uppercase tracking-tighter text-2xl rounded-[2rem] transition-all disabled:opacity-50 disabled:grayscale"
               >
-                {isOpening ? 'Opening...' : `Open Case - ${caseItem.price} PokéCoins`}
-              </Button>
+                {isOpening ? 'ABRIENDO...' : `ABRIR CAJA`}
+              </motion.button>
               <Button 
                 variant="outline"
-                onClick={() => {/* TODO: Implement preview */}}
+                className="px-8 py-6 rounded-[2rem] border-white/5 hover:bg-white/5 font-black italic uppercase tracking-widest text-xs"
+                onClick={() => toast.info('Vista previa próximamente')}
               >
-                Preview Items
+                PREVIEW
               </Button>
             </div>
 
             {/* Warning */}
-            <Card>
-              <p className="text-sm text-gray-400">
-                <span className="text-[var(--neon-yellow)]">Note:</span> All drops are random. Past results do not guarantee future outcomes.
+            <div className="p-6 bg-black/40 border border-white/5 rounded-2xl flex items-start gap-4">
+              <Info className="w-5 h-5 text-gray-600 shrink-0 mt-1" />
+              <p className="text-xs font-medium text-gray-600 leading-relaxed uppercase tracking-wider">
+                <span className="text-gray-400 font-black">AVISO:</span> Todos los drops son aleatorios y se basan en un sistema Provably Fair. Los resultados pasados no garantizan resultados futuros.
               </p>
-            </Card>
+            </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Case Opening Modal */}
       <CaseOpeningModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
