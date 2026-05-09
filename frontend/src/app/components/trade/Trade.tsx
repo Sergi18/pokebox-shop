@@ -1,5 +1,5 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import type { Item } from '../../context/AuthContext';
 import { Card } from '../ui/Card';
@@ -17,11 +17,19 @@ import {
   TrendingDown,
   TrendingUp,
   Minus,
+  ArrowRight,
+  ArrowLeft,
+  Zap,
+  Star,
+  Info,
+  X
 } from 'lucide-react';
 import { getRarityColor, getRarityGlow, caseItemPools } from '../../utils/caseItems';
 import { toast } from 'sonner';
+import pokecoinIcon from '../../../assets/Pokecoin.png';
 
-// Build the global trade catalog from all case item pools
+// ─── Catalog Logic ────────────────────────────────────────────────────────────
+
 interface CatalogItem {
   name: string;
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
@@ -35,7 +43,6 @@ function buildTradeCatalog(): CatalogItem[] {
   let idCounter = 0;
   for (const [caseId, pool] of Object.entries(caseItemPools)) {
     for (const template of pool) {
-      // Create a few variants per item template
       const midValue = Math.floor((template.minValue + template.maxValue) / 2);
       const lowValue = Math.floor(template.minValue * 1.05);
       const highValue = Math.floor(template.maxValue * 0.95);
@@ -52,40 +59,40 @@ function buildTradeCatalog(): CatalogItem[] {
 const FULL_CATALOG = buildTradeCatalog();
 
 const rarityEmoji: Record<string, string> = {
-  Common: '⚪',
-  Rare: '🔵',
-  Epic: '🟣',
-  Legendary: '🟡',
-  Mythic: '🔴',
+  Common: '⚪', Rare: '🔵', Epic: '🟣', Legendary: '🟡', Mythic: '🔴',
 };
 
 const rarityOrder: Record<string, number> = {
-  Common: 0,
-  Rare: 1,
-  Epic: 2,
-  Legendary: 3,
-  Mythic: 4,
+  Common: 0, Rare: 1, Epic: 2, Legendary: 3, Mythic: 4,
 };
 
+// ─── Components ───────────────────────────────────────────────────────────────
+
 function ValueDiffBadge({ offered, received }: { offered: number; received: number }) {
-  const diff = received - offered;
+  const diff = offered - received;
   if (Math.abs(diff) < 1) {
     return (
-      <span className="flex items-center gap-1 text-gray-400 text-xs">
-        <Minus className="w-3 h-3" /> Equal Value
+      <span className="flex items-center gap-1 text-gray-500 text-[10px] font-black uppercase tracking-widest">
+        <Minus className="w-3 h-3" /> VALOR IGUAL
       </span>
     );
   }
-  if (diff < 0) {
+  if (diff > 0) {
     return (
-      <span className="flex items-center gap-1 text-green-400 text-xs">
-        <TrendingDown className="w-3 h-3" /> ${Math.abs(diff).toFixed(0)} below your item
-      </span>
+      <div className="flex flex-col items-center">
+        <span className="flex items-center gap-1 text-emerald-400 text-[9px] font-black uppercase tracking-widest">
+          <TrendingDown className="w-3 h-3" /> REEMBOLSO
+        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-emerald-400 font-black italic text-xs">+{diff.toFixed(0)}</span>
+          <img src={pokecoinIcon} alt="PC" className="w-3 h-3" />
+        </div>
+      </div>
     );
   }
   return (
-    <span className="flex items-center gap-1 text-red-400 text-xs">
-      <TrendingUp className="w-3 h-3" /> +${diff.toFixed(0)} over limit
+    <span className="flex items-center gap-1 text-red-500 text-[10px] font-black uppercase tracking-widest">
+      <TrendingUp className="w-3 h-3" /> EXCESIVO
     </span>
   );
 }
@@ -100,6 +107,8 @@ export function Trade() {
   const [offeredItem, setOfferedItem] = useState<Item | null>(null);
   const [receivedItem, setReceivedItem] = useState<CatalogItem | null>(null);
   const [trading, setTrading] = useState(false);
+  
+  // Filters
   const [inventoryFilter, setInventoryFilter] = useState('all');
   const [catalogFilter, setCatalogFilter] = useState('all');
   const [inventorySearch, setInventorySearch] = useState('');
@@ -107,7 +116,7 @@ export function Trade() {
   const [sortBy, setSortBy] = useState<'value-desc' | 'value-asc' | 'rarity'>('value-desc');
 
   useEffect(() => {
-    loadInventory();
+    if (isAuthenticated) loadInventory();
   }, [isAuthenticated]);
 
   const loadInventory = async () => {
@@ -120,7 +129,6 @@ export function Trade() {
     }
   };
 
-  // Filtered inventory for offer selection
   const filteredInventory = useMemo(() => {
     let items = inventory;
     if (inventoryFilter !== 'all') items = items.filter(i => i.rarity === inventoryFilter);
@@ -132,13 +140,11 @@ export function Trade() {
     });
   }, [inventory, inventoryFilter, inventorySearch, sortBy]);
 
-  // Filtered catalog for receive selection — only items with value ≤ offered item
   const filteredCatalog = useMemo(() => {
     if (!offeredItem) return [];
     let items = FULL_CATALOG.filter(i => i.value <= offeredItem.value);
     if (catalogFilter !== 'all') items = items.filter(i => i.rarity === catalogFilter);
     if (catalogSearch) items = items.filter(i => i.name.toLowerCase().includes(catalogSearch.toLowerCase()));
-    // Deduplicate by name+value+rarity and shuffle for variety
     const seen = new Set<string>();
     const deduped = items.filter(i => {
       const key = `${i.name}_${i.value}_${i.rarity}`;
@@ -153,8 +159,6 @@ export function Trade() {
     setOfferedItem(item);
     setReceivedItem(null);
     setStep('select-receive');
-    setCatalogFilter('all');
-    setCatalogSearch('');
   };
 
   const handleSelectReceive = (item: CatalogItem) => {
@@ -166,17 +170,18 @@ export function Trade() {
     if (!offeredItem || !receivedItem) return;
     setTrading(true);
     try {
+      const refund = Math.max(0, offeredItem.value - receivedItem.value);
       await tradeItem(offeredItem.id, {
         name: receivedItem.name,
         rarity: receivedItem.rarity,
         value: receivedItem.value,
         caseId: receivedItem.caseId,
-      });
+      }, refund);
       setStep('success');
-      toast.success(`¡Intercambio completado! Obtuviste ${receivedItem.name}`);
+      toast.success('¡Intercambio completado!');
       await loadInventory();
     } catch {
-      toast.error('Error al realizar el intercambio. Inténtalo de nuevo.');
+      toast.error('Error al realizar el intercambio.');
     } finally {
       setTrading(false);
     }
@@ -186,7 +191,6 @@ export function Trade() {
     setOfferedItem(null);
     setReceivedItem(null);
     setStep('select-offer');
-    setInventoryFilter('all');
     setInventorySearch('');
   };
 
@@ -194,14 +198,16 @@ export function Trade() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <div className="text-center py-12">
-            <ArrowLeftRight className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-            <h2 className="mb-4">Inicia sesión para intercambiar</h2>
-            <p className="text-gray-400 mb-6">Necesitas una cuenta para usar el sistema de intercambio.</p>
-            <Button variant="default" onClick={() => (window.location.href = '/login')}>
-              Iniciar Sesión
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[#0a0e1a]">
+        <Card className="max-w-md w-full border-2 border-white/5">
+          <div className="text-center py-12 px-6">
+            <div className="w-20 h-20 bg-[var(--neon-yellow)]/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-[var(--neon-yellow)]/20">
+              <ArrowLeftRight className="w-10 h-10 text-[var(--neon-yellow)]" />
+            </div>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-4 text-white">Intercambio Restringido</h2>
+            <p className="text-gray-400 mb-8 font-medium">Inicia sesión para acceder al centro de trueques de PokeBox.</p>
+            <Button variant="default" className="w-full py-6 text-lg font-black italic" onClick={() => window.location.href = '/login'}>
+              INICIAR SESIÓN
             </Button>
           </div>
         </Card>
@@ -210,30 +216,50 @@ export function Trade() {
   }
 
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-6">
+    <div className="min-h-screen py-24 bg-[#0a0e1a] relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-yellow-600/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="container mx-auto px-6 max-w-7xl relative z-10">
+        
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-gradient-to-r from-[var(--neon-yellow)]/20 to-[var(--neon-blue)]/20 rounded-lg border border-[var(--neon-yellow)]/30">
-              <ArrowLeftRight className="w-6 h-6 text-[var(--neon-yellow)]" />
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 bg-[var(--neon-yellow)]/10 text-[var(--neon-yellow)] text-[10px] font-black uppercase tracking-widest border border-[var(--neon-yellow)]/30 rounded-full">
+                Vault Exchange
+              </span>
             </div>
-            <h1 className="bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] bg-clip-text text-transparent">
-              Centro de Intercambio
+            <h1 className="text-5xl font-black italic text-white uppercase tracking-tighter mb-3 leading-none">
+              Centro de <span className="text-[var(--neon-yellow)]">Intercambio</span>
             </h1>
+            <p className="text-gray-500 font-medium max-w-xl">
+              Cambia tus cartas por nuevas piezas. Valor asegurado: si tu carta vale más, te devolvemos la diferencia en PokeCoins.
+            </p>
+          </motion.div>
+
+          {/* Quick Stats */}
+          <div className="hidden lg:flex gap-4">
+            <div className="bg-[#131829] border-2 border-white/5 p-4 rounded-2xl flex items-center gap-4">
+              <div className="p-2 bg-white/5 rounded-xl text-[var(--neon-yellow)]">
+                <Package className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Tu Inventario</div>
+                <div className="text-sm font-black text-white uppercase italic">{inventory.length} Cartas</div>
+              </div>
+            </div>
           </div>
-          <p className="text-gray-400 text-lg">
-            Intercambia tus cartas por otras de igual o menor valor del catálogo global.
-          </p>
-        </motion.div>
+        </div>
 
         {/* Step Indicator */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mb-8">
-          <div className="flex items-center gap-2">
+        {step !== 'success' && (
+          <div className="flex items-center justify-center gap-4 mb-12 overflow-x-auto pb-4">
             {[
-              { id: 'select-offer', label: '1. Elige tu carta', icon: Package },
-              { id: 'select-receive', label: '2. Elige la nueva', icon: Sparkles },
-              { id: 'confirm', label: '3. Confirmar', icon: CheckCircle },
+              { id: 'select-offer', label: 'Entrega', icon: Package },
+              { id: 'select-receive', label: 'Elección', icon: Sparkles },
+              { id: 'confirm', label: 'Trato', icon: CheckCircle },
             ].map((s, idx) => {
               const stepOrder = ['select-offer', 'select-receive', 'confirm', 'success'];
               const current = stepOrder.indexOf(step);
@@ -242,411 +268,353 @@ export function Trade() {
               const isActive = current === thisStep;
               const Icon = s.icon;
               return (
-                <div key={s.id} className="flex items-center gap-2">
-                  <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] text-black'
-                        : isDone
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                        : 'bg-[var(--dark-card)] text-gray-500'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="text-sm hidden sm:inline">{s.label}</span>
+                <React.Fragment key={s.id}>
+                  <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all duration-300 border-2 ${
+                    isActive
+                      ? 'bg-[var(--neon-yellow)]/10 border-[var(--neon-yellow)] text-white shadow-[0_0_20px_rgba(255,215,0,0.15)]'
+                      : isDone
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      : 'bg-white/5 border-white/5 text-gray-600'
+                  }`}>
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--neon-yellow)]' : ''}`} />
+                    <span className="text-sm font-black italic uppercase tracking-tight">{s.label}</span>
                   </div>
-                  {idx < 2 && <div className="w-6 h-px bg-gray-700" />}
-                </div>
+                  {idx < 2 && (
+                    <ArrowRight className={`w-4 h-4 shrink-0 ${current > idx ? 'text-emerald-500' : 'text-gray-800'}`} />
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
-        </motion.div>
+        )}
 
-        {/* SUCCESS */}
         <AnimatePresence mode="wait">
-          {step === 'success' && (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-8xl mb-6"
-              >
-                🎉
-              </motion.div>
-              <h2 className="mb-4 bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] bg-clip-text text-transparent">
-                ¡Intercambio exitoso!
-              </h2>
-              <p className="text-gray-400 mb-2">Has intercambiado:</p>
-              <div className="flex items-center gap-4 mb-8">
-                <div className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300">
-                  {offeredItem?.name}
-                </div>
-                <ArrowLeftRight className="w-6 h-6 text-[var(--neon-yellow)]" />
-                <div className="px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg text-green-300">
-                  {receivedItem?.name}
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <Button variant="default" onClick={handleReset}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Nuevo Intercambio
-                </Button>
-                <Button variant="outline" onClick={() => (window.location.href = '/inventory')}>
-                  Ver Inventario
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* CONFIRM */}
-          {step === 'confirm' && offeredItem && receivedItem && (
-            <motion.div
-              key="confirm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-2xl mx-auto"
-            >
-              <Card>
-                <h2 className="mb-6 text-center">Confirmar Intercambio</h2>
-                <div className="grid grid-cols-5 gap-4 items-center mb-8">
-                  {/* Offered */}
-                  <div className="col-span-2">
-                    <div className="text-xs text-gray-400 text-center mb-2">Entregas</div>
-                    <div
-                      className={`p-4 rounded-xl bg-gradient-to-br ${getRarityColor(offeredItem.rarity)} bg-opacity-20 border border-red-500/30 text-center ${getRarityGlow(offeredItem.rarity)}`}
-                    >
-                      <div className="text-4xl mb-2">{rarityEmoji[offeredItem.rarity]}</div>
-                      <div className="text-sm text-white mb-1">{offeredItem.name}</div>
-                      <div className="text-xs text-gray-300 mb-1">{offeredItem.rarity}</div>
-                      <div className="text-[var(--neon-yellow)]">${offeredItem.value.toLocaleString()}</div>
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="col-span-1 flex flex-col items-center gap-2">
-                    <motion.div animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.2 }}>
-                      <ArrowLeftRight className="w-8 h-8 text-[var(--neon-yellow)]" />
-                    </motion.div>
-                    <ValueDiffBadge offered={offeredItem.value} received={receivedItem.value} />
-                  </div>
-
-                  {/* Received */}
-                  <div className="col-span-2">
-                    <div className="text-xs text-gray-400 text-center mb-2">Recibes</div>
-                    <div
-                      className={`p-4 rounded-xl bg-gradient-to-br ${getRarityColor(receivedItem.rarity)} bg-opacity-20 border border-green-500/30 text-center ${getRarityGlow(receivedItem.rarity)}`}
-                    >
-                      <div className="text-4xl mb-2">{rarityEmoji[receivedItem.rarity]}</div>
-                      <div className="text-sm text-white mb-1">{receivedItem.name}</div>
-                      <div className="text-xs text-gray-300 mb-1">{receivedItem.rarity}</div>
-                      <div className="text-[var(--neon-yellow)]">${receivedItem.value.toLocaleString()}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Value note */}
-                <div className="mb-6 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-300">
-                    Solo puedes intercambiar por cartas de <strong>igual o menor valor</strong>. Una vez confirmado, el intercambio no se puede deshacer.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1" onClick={() => setStep('select-receive')}>
-                    Atrás
-                  </Button>
-                  <Button
-                    variant="default"
-                    className="flex-1"
-                    onClick={handleTrade}
-                    disabled={trading}
-                  >
-                    {trading ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Procesando...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowLeftRight className="w-4 h-4 mr-2" />
-                        Confirmar Intercambio
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
           {/* STEP 1: Select offer */}
           {step === 'select-offer' && (
-            <motion.div key="select-offer" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-              <Card className="mb-6">
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
-                  <h2 className="text-lg">Selecciona la carta que quieres ofrecer</h2>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Package className="w-4 h-4" />
-                    <span>{inventory.length} cartas en inventario</span>
-                  </div>
-                </div>
+            <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Sidebar Filters */}
+                <div className="lg:col-span-1 space-y-6">
+                  <Card className="border-2 border-white/5 p-6 rounded-[2rem] bg-[#131829]">
+                    <div className="mb-8">
+                      <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Search className="w-3 h-3" /> Buscar
+                      </h3>
+                      <input
+                        type="text"
+                        placeholder="Nombre de carta..."
+                        value={inventorySearch}
+                        onChange={e => setInventorySearch(e.target.value)}
+                        className="w-full bg-black/40 border-2 border-white/5 focus:border-[var(--neon-yellow)] rounded-xl py-3 px-4 text-white font-bold outline-none transition-all placeholder-gray-700"
+                      />
+                    </div>
 
-                {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Buscar carta..."
-                      value={inventorySearch}
-                      onChange={(e) => setInventorySearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-[var(--dark-hover)] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--neon-blue)]"
-                    />
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {rarityFilters.map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setInventoryFilter(r)}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                          inventoryFilter === r
-                            ? 'bg-[var(--neon-yellow)] text-black'
-                            : 'bg-[var(--dark-hover)] text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        {r === 'all' ? 'Todos' : r}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="relative">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as any)}
-                      className="appearance-none pl-3 pr-8 py-2 bg-[var(--dark-hover)] border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-[var(--neon-blue)] cursor-pointer"
-                    >
-                      <option value="value-desc">Mayor valor</option>
-                      <option value="value-asc">Menor valor</option>
-                      <option value="rarity">Por rareza</option>
-                    </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-              </Card>
-
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin w-12 h-12 border-4 border-[var(--neon-yellow)] border-t-transparent rounded-full mx-auto" />
-                  <p className="text-gray-400 mt-4">Cargando inventario...</p>
-                </div>
-              ) : filteredInventory.length === 0 ? (
-                <Card>
-                  <div className="text-center py-12">
-                    <Package className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                    <h3 className="mb-2">No hay cartas disponibles</h3>
-                    <p className="text-gray-400 mb-6">
-                      {inventorySearch || inventoryFilter !== 'all'
-                        ? 'No se encontraron cartas con ese filtro.'
-                        : '¡Abre algunas cajas para obtener cartas!'}
-                    </p>
-                    <Button variant="default" onClick={() => (window.location.href = '/cases')}>
-                      Abrir Cajas
-                    </Button>
-                  </div>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {filteredInventory.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.04 }}
-                      whileHover={{ scale: 1.03 }}
-                    >
-                      <div
-                        onClick={() => handleSelectOffer(item)}
-                        className={`relative cursor-pointer rounded-xl border transition-all duration-200 overflow-hidden
-                          ${offeredItem?.id === item.id
-                            ? 'border-[var(--neon-yellow)] shadow-[0_0_20px_rgba(255,215,0,0.4)]'
-                            : 'border-gray-700 hover:border-gray-500'
-                          } bg-[var(--dark-card)] p-4`}
-                      >
-                        {/* Rarity badge */}
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-xs bg-gradient-to-r ${getRarityColor(item.rarity)} text-white mb-3`}
-                        >
-                          {item.rarity}
-                        </span>
-
-                        {/* Visual */}
-                        <div
-                          className={`w-full aspect-square rounded-lg bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-3 ${getRarityGlow(item.rarity)}`}
-                        >
-                          <span className="text-4xl">{rarityEmoji[item.rarity]}</span>
-                        </div>
-
-                        <div className="text-sm text-white mb-1 truncate">{item.name}</div>
-                        <div className="text-[var(--neon-yellow)] text-sm">${item.value.toLocaleString()}</div>
-
-                        {/* Select overlay */}
-                        {offeredItem?.id === item.id && (
-                          <div className="absolute top-2 right-2">
-                            <CheckCircle className="w-5 h-5 text-[var(--neon-yellow)]" />
-                          </div>
-                        )}
+                    <div>
+                      <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Star className="w-3 h-3" /> Rareza
+                      </h3>
+                      <div className="flex flex-col gap-2">
+                        {rarityFilters.map(r => (
+                          <button
+                            key={r}
+                            onClick={() => setInventoryFilter(r)}
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-black uppercase italic transition-all border-2 ${
+                              inventoryFilter === r
+                                ? 'bg-[var(--neon-yellow)]/10 border-[var(--neon-yellow)] text-white'
+                                : 'bg-black/20 border-white/5 text-gray-500 hover:border-white/10'
+                            }`}
+                          >
+                            <span>{r === 'all' ? 'Todas' : r}</span>
+                            <span className="text-[10px] opacity-50">{r === 'all' ? inventory.length : inventory.filter(i => i.rarity === r).length}</span>
+                          </button>
+                        ))}
                       </div>
-                    </motion.div>
-                  ))}
+                    </div>
+                  </Card>
+
+                  <div className="p-6 bg-blue-500/5 border-2 border-blue-500/10 rounded-[2rem]">
+                    <div className="flex gap-3 mb-3">
+                      <Info className="w-4 h-4 text-blue-400 shrink-0" />
+                      <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest">¿Cómo funciona?</h4>
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold leading-relaxed uppercase">
+                      Selecciona una carta de tu inventario para ofrecer. Podrás elegir cualquier carta del catálogo de igual o menor valor.
+                    </p>
+                  </div>
                 </div>
-              )}
+
+                {/* Grid */}
+                <div className="lg:col-span-3">
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <RefreshCw className="w-10 h-10 animate-spin text-[var(--neon-yellow)]" />
+                      <p className="text-gray-500 font-black italic uppercase tracking-widest mt-6">Cargando Bóveda...</p>
+                    </div>
+                  ) : filteredInventory.length === 0 ? (
+                    <div className="bg-[#131829] border-2 border-dashed border-white/5 rounded-[3rem] p-12 text-center">
+                      <Package className="w-12 h-12 text-gray-800 mx-auto mb-6" />
+                      <h3 className="text-xl font-black text-white uppercase italic mb-2">Sin Resultados</h3>
+                      <p className="text-gray-500 font-medium mb-8 max-w-xs mx-auto">No tienes cartas que coincidan con los filtros.</p>
+                      <Button variant="default" onClick={() => window.location.href = '/cases'}>ABRIR CAJAS</Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {filteredInventory.map((item, index) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.02 }}
+                          whileHover={{ y: -5 }}
+                          onClick={() => handleSelectOffer(item)}
+                          className={`relative group cursor-pointer rounded-[1.5rem] border-2 transition-all duration-300 p-4 bg-[#131829] border-white/5 hover:border-[var(--neon-yellow)]/50`}
+                        >
+                          <div className="mb-3">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase italic ${getRarityColor(item.rarity)} text-white shadow-lg`}>
+                              {item.rarity}
+                            </span>
+                          </div>
+                          <div className={`w-full aspect-[3/4] rounded-2xl bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-500 overflow-hidden relative ${getRarityGlow(item.rarity)}`}>
+                            <div className="absolute inset-0 bg-black/20" />
+                            <span className="text-4xl relative z-10">{rarityEmoji[item.rarity]}</span>
+                          </div>
+                          <div className="text-[10px] font-black text-white uppercase italic tracking-tight truncate mb-1">{item.name}</div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-black text-[var(--neon-yellow)] italic">{item.value.toLocaleString()}</span>
+                            <img src={pokecoinIcon} alt="Coin" className="w-3 h-3" />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
-          {/* STEP 2: Select what to receive */}
+          {/* STEP 2: Select receive */}
           {step === 'select-receive' && offeredItem && (
-            <motion.div key="select-receive" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-              {/* Offered item summary */}
-              <div className="mb-6 p-4 bg-[var(--dark-card)] border border-[var(--neon-yellow)]/30 rounded-xl flex items-center gap-4">
-                <div
-                  className={`w-14 h-14 rounded-lg bg-gradient-to-br ${getRarityColor(offeredItem.rarity)} flex items-center justify-center shrink-0 ${getRarityGlow(offeredItem.rarity)}`}
-                >
-                  <span className="text-2xl">{rarityEmoji[offeredItem.rarity]}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-400">Ofreces:</div>
-                  <div className="text-white truncate">{offeredItem.name}</div>
-                  <div className="text-[var(--neon-yellow)] text-sm">${offeredItem.value.toLocaleString()} · {offeredItem.rarity}</div>
-                </div>
-                <Button variant="ghost" onClick={() => setStep('select-offer')} className="text-sm shrink-0">
-                  Cambiar
-                </Button>
-              </div>
+            <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Selection Summary Sidebar */}
+                <div className="lg:col-span-1 space-y-6">
+                  <Card className="border-2 border-[var(--neon-yellow)]/30 bg-[var(--neon-yellow)]/5 p-6 rounded-[2rem]">
+                    <h3 className="text-[10px] font-black text-[var(--neon-yellow)] uppercase tracking-[0.2em] mb-4">Tu Oferta</h3>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${getRarityColor(offeredItem.rarity)} flex items-center justify-center shrink-0 shadow-lg ${getRarityGlow(offeredItem.rarity)}`}>
+                        <span className="text-2xl">{rarityEmoji[offeredItem.rarity]}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-black text-white uppercase italic truncate">{offeredItem.name}</div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-black text-[var(--neon-yellow)]">{offeredItem.value}</span>
+                          <img src={pokecoinIcon} alt="PC" className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setStep('select-offer')} className="w-full text-[9px] font-black border-white/10">
+                      CAMBIAR OFERTA
+                    </Button>
+                  </Card>
 
-              {/* Catalog filters */}
-              <Card className="mb-6">
-                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg">Cartas disponibles para recibir</h2>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Solo se muestran cartas con valor ≤ ${offeredItem.value.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-lg">
-                    <Filter className="w-4 h-4" />
-                    {filteredCatalog.length} disponibles
-                  </div>
+                  <Card className="border-2 border-white/5 p-6 rounded-[2rem] bg-[#131829]">
+                    <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Filtrar Catálogo</h3>
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Buscar en catálogo..."
+                        value={catalogSearch}
+                        onChange={e => setCatalogSearch(e.target.value)}
+                        className="w-full bg-black/40 border-2 border-white/5 focus:border-[var(--neon-blue)] rounded-xl py-3 px-4 text-white font-bold outline-none text-xs"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        {rarityFilters.map(r => (
+                          <button
+                            key={r}
+                            onClick={() => setCatalogFilter(r)}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase italic border-2 transition-all ${
+                              catalogFilter === r ? 'bg-[var(--neon-blue)] border-[var(--neon-blue)] text-black' : 'bg-black/20 border-white/5 text-gray-500'
+                            }`}
+                          >
+                            {r === 'all' ? 'T' : r.charAt(0)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Buscar carta del catálogo..."
-                      value={catalogSearch}
-                      onChange={(e) => setCatalogSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-[var(--dark-hover)] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--neon-blue)]"
-                    />
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {rarityFilters.map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setCatalogFilter(r)}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                          catalogFilter === r
-                            ? 'bg-[var(--neon-blue)] text-black'
-                            : 'bg-[var(--dark-hover)] text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        {r === 'all' ? 'Todos' : r}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </Card>
 
-              {filteredCatalog.length === 0 ? (
-                <Card>
-                  <div className="text-center py-12">
-                    <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                    <h3 className="mb-2">Sin cartas disponibles</h3>
-                    <p className="text-gray-400">
-                      No hay cartas con ese filtro que puedas obtener a cambio.
-                    </p>
+                {/* Catalog Grid */}
+                <div className="lg:col-span-3">
+                  <div className="mb-6 flex items-center justify-between">
+                    <h2 className="text-xl font-black italic uppercase text-white">Cartas Disponibles</h2>
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Máx: {offeredItem.value} PC</span>
                   </div>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {filteredCatalog.map((item, index) => {
-                    const isSelected = receivedItem?.catalogId === item.catalogId;
-                    const diff = item.value - offeredItem.value;
-                    return (
-                      <motion.div
-                        key={item.catalogId}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.03 }}
-                        whileHover={{ scale: 1.03 }}
-                      >
-                        <div
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {filteredCatalog.map((item, index) => {
+                      const refund = offeredItem.value - item.value;
+                      return (
+                        <motion.div
+                          key={item.catalogId}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.02 }}
+                          whileHover={{ y: -5 }}
                           onClick={() => handleSelectReceive(item)}
-                          className={`relative cursor-pointer rounded-xl border transition-all duration-200 overflow-hidden
-                            ${isSelected
-                              ? 'border-[var(--neon-blue)] shadow-[0_0_20px_rgba(0,212,255,0.4)]'
-                              : 'border-gray-700 hover:border-gray-500'
-                            } bg-[var(--dark-card)] p-4`}
+                          className={`relative group cursor-pointer rounded-[1.5rem] border-2 transition-all duration-300 p-4 bg-[#131829] border-white/5 hover:border-[var(--neon-blue)]/50`}
                         >
-                          {/* Value diff tag */}
-                          <div className="absolute top-2 right-2">
-                            {Math.abs(diff) < 1 ? (
-                              <span className="text-xs bg-gray-500/40 text-gray-300 px-1.5 py-0.5 rounded">≈</span>
-                            ) : (
-                              <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
-                                -{Math.abs(diff).toFixed(0)}
-                              </span>
-                            )}
-                          </div>
-
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs bg-gradient-to-r ${getRarityColor(item.rarity)} text-white mb-3`}
-                          >
-                            {item.rarity}
-                          </span>
-
-                          <div
-                            className={`w-full aspect-square rounded-lg bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-3 ${getRarityGlow(item.rarity)}`}
-                          >
-                            <span className="text-4xl">{rarityEmoji[item.rarity]}</span>
-                          </div>
-
-                          <div className="text-sm text-white mb-1 truncate">{item.name}</div>
-                          <div className="text-[var(--neon-yellow)] text-sm">${item.value.toLocaleString()}</div>
-
-                          {isSelected && (
-                            <div className="mt-2">
-                              <Button
-                                variant="default"
-                                className="w-full text-xs py-1.5"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setStep('confirm');
-                                }}
-                              >
-                                Continuar →
-                              </Button>
+                          {refund > 0 && (
+                            <div className="absolute top-2 right-2 z-10 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase">
+                              +{refund} PC
                             </div>
                           )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                          <div className="mb-3">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase italic ${getRarityColor(item.rarity)} text-white`}>
+                              {item.rarity}
+                            </span>
+                          </div>
+                          <div className={`w-full aspect-[3/4] rounded-2xl bg-gradient-to-br ${getRarityColor(item.rarity)} flex items-center justify-center mb-4 overflow-hidden relative ${getRarityGlow(item.rarity)}`}>
+                            <div className="absolute inset-0 bg-black/20" />
+                            <span className="text-4xl relative z-10">{rarityEmoji[item.rarity]}</span>
+                          </div>
+                          <div className="text-[10px] font-black text-white uppercase italic truncate mb-1">{item.name}</div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-black text-[var(--neon-blue)] italic">{item.value.toLocaleString()}</span>
+                            <img src={pokecoinIcon} alt="Coin" className="w-3 h-3" />
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 3: Confirm */}
+          {step === 'confirm' && offeredItem && receivedItem && (
+            <motion.div key="confirm" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <div className="max-w-3xl mx-auto">
+                <Card className="border-2 border-white/5 p-10 md:p-12 rounded-[3rem] overflow-hidden relative bg-[#131829]">
+                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[var(--neon-yellow)] via-white to-[var(--neon-blue)]" />
+                  
+                  <div className="text-center mb-12">
+                    <h2 className="text-3xl font-black italic uppercase text-white tracking-tighter mb-2">Confirmar Trato</h2>
+                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em]">Revisa los términos del intercambio</p>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-12 relative">
+                    {/* Offerec */}
+                    <div className="flex-1 w-full text-center">
+                      <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Tú Entregas</div>
+                      <div className={`p-6 rounded-[2.5rem] border-2 border-red-500/20 bg-red-500/5 relative overflow-hidden group`}>
+                        <div className="text-5xl mb-4">{rarityEmoji[offeredItem.rarity]}</div>
+                        <h4 className="text-sm font-black text-white uppercase italic mb-1">{offeredItem.name}</h4>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="text-xs font-black text-gray-400">{offeredItem.value}</span>
+                          <img src={pokecoinIcon} alt="PC" className="w-3 h-3 opacity-50" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <div className="w-16 h-16 bg-white/5 text-white rounded-full flex items-center justify-center font-black italic text-xl border-2 border-white/10 z-20 relative">
+                        <ArrowLeftRight className="w-6 h-6 text-[var(--neon-yellow)]" />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-[2px] bg-white/5 md:w-[2px] md:h-48" />
+                    </div>
+
+                    {/* Receive */}
+                    <div className="flex-1 w-full text-center">
+                      <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Tú Recibes</div>
+                      <div className={`p-6 rounded-[2.5rem] border-2 border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group`}>
+                        <div className="text-5xl mb-4">{rarityEmoji[receivedItem.rarity]}</div>
+                        <h4 className="text-sm font-black text-white uppercase italic mb-1">{receivedItem.name}</h4>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="text-xs font-black text-[var(--neon-blue)]">{receivedItem.value}</span>
+                          <img src={pokecoinIcon} alt="PC" className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Box */}
+                  <div className="bg-black/30 rounded-[2rem] border-2 border-white/5 p-8 mb-10">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500/10 rounded-xl">
+                          <ValueDiffBadge offered={offeredItem.value} received={receivedItem.value} />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Estado del Trato</div>
+                        <div className="text-xs font-black text-emerald-400 uppercase italic">Beneficio Justo</div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-start gap-3">
+                      <AlertCircle className="w-4 h-4 text-[var(--neon-yellow)] shrink-0 mt-0.5" />
+                      <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tight leading-relaxed">
+                        Al confirmar, tu carta actual será retirada y la nueva se añadirá a tu inventario. Cualquier excedente de valor se abonará en PokeCoins automáticamente.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button onClick={() => setStep('select-receive')} className="flex-1 py-5 border-2 border-white/5 rounded-2xl text-gray-500 font-black italic uppercase tracking-wider hover:bg-white/5 transition-all">
+                      ← REVISAR
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleTrade}
+                      disabled={trading}
+                      className="flex-[2] py-5 bg-[var(--neon-yellow)] rounded-2xl text-black font-black italic uppercase tracking-wider shadow-[0_0_30px_rgba(255,215,0,0.3)] flex items-center justify-center gap-3"
+                    >
+                      {trading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><ArrowLeftRight className="w-5 h-5" /> EJECUTAR INTERCAMBIO</>}
+                    </motion.button>
+                  </div>
+                </Card>
+              </div>
+            </motion.div>
+          )}
+
+          {/* SUCCESS */}
+          {step === 'success' && (
+            <motion.div key="success" initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="max-w-xl mx-auto">
+              <Card className="border-2 border-[var(--neon-yellow)]/30 bg-[#131829] p-10 text-center rounded-[3rem] relative shadow-[0_0_50px_rgba(255,215,0,0.1)]">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                  className="absolute inset-0 opacity-10 pointer-events-none"
+                >
+                  <Zap className="w-full h-full text-[var(--neon-yellow)]" />
+                </motion.div>
+                
+                <div className="w-24 h-24 bg-gradient-to-br from-[var(--neon-yellow)] to-orange-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(255,215,0,0.4)] relative z-10">
+                  <Sparkles className="w-10 h-10 text-black" />
+                </div>
+                
+                <h2 className="text-4xl font-black italic uppercase text-white tracking-tighter mb-4 leading-none relative z-10">
+                  ¡INTERCAMBIO <span className="text-[var(--neon-yellow)]">EXITOSO!</span>
+                </h2>
+                <p className="text-gray-400 font-bold text-sm mb-10 max-w-sm mx-auto relative z-10 uppercase tracking-widest">
+                  La Bóveda se ha actualizado. Tu nueva carta ya está disponible en el inventario.
+                </p>
+
+                <div className="flex flex-col gap-4 relative z-10">
+                  <Button variant="default" className="w-full py-6 rounded-2xl font-black italic uppercase tracking-wider" onClick={handleReset}>
+                    NUEVO INTERCAMBIO
+                  </Button>
+                  <button
+                    onClick={() => window.location.href = '/inventory'}
+                    className="w-full py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] hover:text-white transition-all flex items-center justify-center gap-2"
+                  >
+                    VER MI COLECCIÓN
+                  </button>
+                </div>
+              </Card>
             </motion.div>
           )}
         </AnimatePresence>
