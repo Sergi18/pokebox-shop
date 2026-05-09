@@ -261,16 +261,19 @@ export function CaseDetail() {
 
             <div className="flex flex-col sm:flex-row gap-4 max-w-xl">
               <motion.button 
-                whileHover={{ scale: 1.02, boxShadow: "0 0 40px rgba(0,212,255,0.4)" }}
+                whileHover={{ scale: 1.02, boxShadow: "0 0 40px rgba(0,212,255,0.6)" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleOpenCase}
                 disabled={isOpening || !isAuthenticated || (user && user.balance < caseItem.price)}
-                className="flex-[2] py-8 bg-[var(--neon-blue)] text-black font-black italic uppercase tracking-tighter text-3xl rounded-[2.5rem] transition-all disabled:opacity-50 relative overflow-hidden group"
+                className="flex-[2] py-8 bg-gradient-to-r from-[var(--neon-blue)] to-blue-600 text-black font-black italic uppercase tracking-tighter text-3xl rounded-[2.5rem] transition-all disabled:opacity-50 relative overflow-hidden group shadow-[0_0_20px_rgba(0,212,255,0.3)] border-b-4 border-blue-800"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <div className="relative flex items-center justify-center gap-4">
-                  {isOpening ? <RefreshCw className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8" />}
-                  <span>{isOpening ? 'ABRIENDO...' : 'ABRIR CAJA'}</span>
+                  {isOpening ? <RefreshCw className="w-8 h-8 animate-spin" /> : <img src={pokecoinIcon} alt="Coins" className="w-8 h-8 object-contain" />}
+                  <div className="flex flex-col items-center">
+                    <span>{isOpening ? 'ABRIENDO...' : 'ABRIR CAJA'}</span>
+                    <span className="text-sm font-black text-black/70 italic tracking-widest">{caseItem.price} PkCoins</span>
+                  </div>
                 </div>
               </motion.button>
               
