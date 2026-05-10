@@ -42,7 +42,7 @@ function SafeImage({ src, alt, rarity }: { src?: string; alt: string; rarity: st
 }
 
 export function Inventory() {
-  const { user, isAuthenticated, getInventory, removeItems } = useAuth();
+  const { user, isAuthenticated, getInventory, removeItems, updateUser } = useAuth();
   const [inventory, setInventory] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -78,8 +78,11 @@ export function Inventory() {
   const rarityFilters = ['all', 'common', 'rare', 'epic', 'legendary', 'mythic'];
 
   const handleSell = async (item: Item) => {
+    console.log("Sell clicked", item);
+    if (!user) return;
     try {
       await removeItems([item.id]);
+      await updateUser({ balance: Number(user.balance) + Number(item.value) });
       toast.success(`Has vendido ${item.name} por ${item.value} monedas`);
       loadInventory();
     } catch (error) {
@@ -202,11 +205,11 @@ export function Inventory() {
                   
                   <h3 className="text-lg font-black italic text-white uppercase tracking-tight truncate mb-4">{item.name}</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="grid grid-cols-2 gap-2 mt-2 relative z-30">
                     <Button variant="outline" className="text-[9px] py-3 rounded-xl border-purple-500/20 font-black uppercase italic tracking-widest hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400" onClick={() => handleSell(item)}>
                         VENDER
                     </Button>
-                    <Button variant="outline" className="text-[9px] py-3 rounded-xl border-purple-500/20 font-black uppercase italic tracking-widest hover:bg-purple-500/10 hover:border-purple-500/50 hover:text-purple-300" onClick={() => setSelectedDetail(item)}>
+                    <Button variant="outline" className="text-[9px] py-3 rounded-xl border-purple-500/20 font-black uppercase italic tracking-widest hover:bg-purple-500/10 hover:border-purple-500/50 hover:text-purple-300" onClick={() => { console.log("Details clicked", item); setSelectedDetail(item); }}>
                         <Eye className="w-3 h-3" /> DETALLES
                     </Button>
                 </div>
