@@ -2,7 +2,8 @@ import { motion } from 'motion/react';
 import { Trophy, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-const winners = [
+// Filtramos inicialmente solo los drops mayores a 1000
+const allWinners = [
   { id: 1, username: 'Trainer_Alex', item: 'Legendary Thunder Stone', value: 2499, rarity: 'Legendary' },
   { id: 2, username: 'PokeMaster99', item: 'Rare Fire Crystal', value: 899, rarity: 'Rare' },
   { id: 3, username: 'ChampionSarah', item: 'Epic Water Gem', value: 1299, rarity: 'Epic' },
@@ -13,8 +14,10 @@ const winners = [
   { id: 8, username: 'QueenGamer', item: 'Common Electric Bolt', value: 199, rarity: 'Common' },
 ];
 
+const highValueWinners = allWinners.filter(w => w.value > 1000);
+
 export function LiveFeed() {
-  const [displayedWinners, setDisplayedWinners] = useState(winners);
+  const [displayedWinners, setDisplayedWinners] = useState(highValueWinners);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,11 +44,11 @@ export function LiveFeed() {
           <h2 className="mb-4 flex items-center justify-center gap-3">
             <Trophy className="w-8 h-8 text-[var(--neon-yellow)]" />
             <span className="bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-red)] bg-clip-text text-transparent">
-              Live Wins
+              Drops Imposibles (Live)
             </span>
           </h2>
           <p className="text-gray-400">
-            See what other players are winning right now
+            Mira qué entrenadores han conseguido recompensas épicas (+1000 PkCoins)
           </p>
         </motion.div>
         
@@ -79,7 +82,7 @@ export function LiveFeed() {
                   }`}>
                     {winner.item}
                   </div>
-                  <div className="text-[var(--neon-yellow)]">{winner.value} Credits</div>
+                  <div className="text-[var(--neon-yellow)]">{winner.value} PkCoins</div>
                 </div>
               </motion.div>
             ))}
