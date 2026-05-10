@@ -1,9 +1,190 @@
 /* Aura Fantasmal Animada */
+
+/* Gengar Aura Púrpura (Defecto) */
+.gengar-aura {
+  position: relative;
+  isolation: isolate;
+}
+.gengar-aura::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(circle at center, rgba(168, 85, 247, 0.4), transparent 70%);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 20px;
+  animation: gengar-float 4s ease-in-out infinite;
+  opacity: 0.6;
+}
+.gengar-aura::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  z-index: 0;
+  box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.2);
+}
+@keyframes gengar-float {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
+}
+
+/* Aura Naranja (Cajas) */
+.gengar-aura-orange {
+  position: relative;
+  isolation: isolate;
+}
+.gengar-aura-orange::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(circle at center, rgba(249, 115, 22, 0.4), transparent 70%);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 20px;
+  animation: gengar-float-orange 4s ease-in-out infinite;
+  opacity: 0.6;
+}
+.gengar-aura-orange::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(249, 115, 22, 0.5);
+  z-index: 0;
+  box-shadow: inset 0 0 10px rgba(249, 115, 22, 0.2);
+}
+@keyframes gengar-float-orange {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
+}
+
+/* Aura Rosa (Intercambio) */
+.gengar-aura-pink {
+  position: relative;
+  isolation: isolate;
+}
+.gengar-aura-pink::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(circle at center, rgba(236, 72, 153, 0.4), transparent 70%);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 20px;
+  animation: gengar-float-pink 4s ease-in-out infinite;
+  opacity: 0.6;
+}
+.gengar-aura-pink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(236, 72, 153, 0.5);
+  z-index: 0;
+  box-shadow: inset 0 0 10px rgba(236, 72, 153, 0.2);
+}
+@keyframes gengar-float-pink {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
+}
+
+/* Aura Roja (Batallas) */
+.gengar-aura-red {
+  position: relative;
+  isolation: isolate;
+}
+.gengar-aura-red::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.4), transparent 70%);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 20px;
+  animation: gengar-float-red 4s ease-in-out infinite;
+  opacity: 0.6;
+}
+.gengar-aura-red::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  z-index: 0;
+  box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2);
+}
+@keyframes gengar-float-red {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
+}
+
+/* Aura Amarilla (Premios) */
+.gengar-aura-yellow {
+  position: relative;
+  isolation: isolate;
+}
+.gengar-aura-yellow::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(circle at center, rgba(234, 179, 8, 0.4), transparent 70%);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 20px;
+  animation: gengar-float-yellow 4s ease-in-out infinite;
+  opacity: 0.6;
+}
+.gengar-aura-yellow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  z-index: 0;
+  box-shadow: inset 0 0 10px rgba(234, 179, 8, 0.2);
+}
+@keyframes gengar-float-yellow {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
+}
+
+/* Aura Azul (Soporte) */
+.gengar-aura-blue {
+  position: relative;
+  isolation: isolate;
+}
+.gengar-aura-blue::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.4), transparent 70%);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 20px;
+  animation: gengar-float-blue 4s ease-in-out infinite;
+  opacity: 0.6;
+}
+.gengar-aura-blue::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  z-index: 0;
+  box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.2);
+}
+@keyframes gengar-float-blue {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
+}
+
+/* Aura Verde (Envío) */
 .gengar-aura-green {
   position: relative;
   isolation: isolate;
 }
-
 .gengar-aura-green::before {
   content: '';
   position: absolute;
@@ -15,7 +196,6 @@
   animation: gengar-float-green 4s ease-in-out infinite;
   opacity: 0.6;
 }
-
 .gengar-aura-green::after {
   content: '';
   position: absolute;
@@ -25,7 +205,6 @@
   z-index: 0;
   box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.2);
 }
-
 @keyframes gengar-float-green {
   0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
   50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
