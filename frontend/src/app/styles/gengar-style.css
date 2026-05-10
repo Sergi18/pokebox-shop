@@ -1,32 +1,32 @@
 /* Aura Fantasmal Animada */
-.gengar-aura-blue {
+.gengar-aura-green {
   position: relative;
   isolation: isolate;
 }
 
-.gengar-aura-blue::before {
+.gengar-aura-green::before {
   content: '';
   position: absolute;
   inset: -4px;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.4), transparent 70%);
+  background: radial-gradient(circle at center, rgba(34, 197, 94, 0.4), transparent 70%);
   z-index: -1;
   filter: blur(8px);
   border-radius: 20px;
-  animation: gengar-float-blue 4s ease-in-out infinite;
+  animation: gengar-float-green 4s ease-in-out infinite;
   opacity: 0.6;
 }
 
-.gengar-aura-blue::after {
+.gengar-aura-green::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 16px;
-  border: 1px solid rgba(59, 130, 246, 0.5);
+  border: 1px solid rgba(34, 197, 94, 0.5);
   z-index: 0;
-  box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.2);
+  box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.2);
 }
 
-@keyframes gengar-float-blue {
+@keyframes gengar-float-green {
   0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
   50% { transform: scale(1.05) translateY(-2px); opacity: 0.7; }
 }

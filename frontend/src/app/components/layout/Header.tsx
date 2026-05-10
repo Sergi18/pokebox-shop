@@ -1,12 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Zap, ShoppingBag, Sword, Trophy, HeadphonesIcon, User, Truck, ArrowLeftRight } from 'lucide-react';
+import { Zap, ShoppingBag, Trophy, HeadphonesIcon, Truck, ArrowLeftRight, Sword } from 'lucide-react';
 import { Button } from '../ui/Button';
 import logo from 'figma:asset/6e863f4494a0b578dad3289d366d63fdcde5ae2f.png';
 import pokecoinIcon from '../../../assets/Pokecoin.png';
 import iconogengar from '../../../assets/iconogengar.webp';
 import iconobatalla from '../../../assets/iconobatalla.webp';
 import perfilIcon from '../../../assets/perfil.webp';
+import pokebox from '../../../assets/pokebox.webp';
+import furgoneta from '../../../assets/furgoneta.png';
 import '../../styles/gengar-style.css';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
@@ -30,13 +32,23 @@ export function Header() {
   
   const navItems = [
     { path: '/', label: 'Inicio', icon: Zap },
-    { path: '/cases', label: 'Cajas', icon: ShoppingBag },
+    { 
+      path: '/cases', 
+      label: 'Cajas', 
+      customIcon: <img src={pokebox} className="w-4 h-4 object-contain" alt="Cajas" /> 
+    },
     { path: '/trade', label: 'Intercambio', icon: ArrowLeftRight },
-    { path: '/delivery', label: 'Envío', icon: Truck, isSpecialBlue: true },
+    { 
+      path: '/delivery', 
+      label: 'Envío', 
+      customIcon: <img src={furgoneta} className="w-5 h-5 object-contain" alt="Envío" />,
+      isSpecialGreen: true 
+    },
     { 
       path: '/battles', 
       label: 'Batallas', 
-      customIcon: <img src={iconobatalla} className="w-4 h-4 object-contain" alt="Batallas" /> 
+      customIcon: <img src={iconobatalla} className="w-4 h-4 object-contain" alt="Batallas" />,
+      isSpecialRed: true 
     },
     { path: '/rewards', label: 'Premios', icon: Trophy, isSpecialYellow: true },
     { 
@@ -47,7 +59,7 @@ export function Header() {
     { 
       path: '/support', 
       label: 'Soporte', 
-      isSpecialRed: true 
+      isSpecialBlue: true 
     },
   ];
   
@@ -74,53 +86,41 @@ export function Header() {
                 <Link key={item.path} to={item.path}>
                   {item.isSpecial ? (
                     <div className="gengar-aura mx-1">
-                      <motion.div
-                        whileHover={{ scale: 1.03 }}
-                        className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-purple-500/30 text-white transition-all duration-300"
-                      >
-                        <img src={iconogengar} className="w-4 h-4 drop-shadow-[0_0_5px_rgba(168,85,247,0.8)] relative z-10" alt="Gengar" />
-                        <span className="font-bold text-[11px] uppercase tracking-wider relative z-10">{item.label}</span>
+                      <motion.div whileHover={{ scale: 1.03 }} className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-purple-500/30 text-white transition-all duration-300">
+                        <img src={iconogengar} className="w-4 h-4" alt="Gengar" />
+                        <span className="font-bold text-[11px] uppercase tracking-wider">{item.label}</span>
                       </motion.div>
                     </div>
                   ) : item.isSpecialRed ? (
                     <div className="gengar-aura-red mx-1">
-                      <motion.div
-                        whileHover={{ scale: 1.03 }}
-                        className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-red-500/30 text-white transition-all duration-300"
-                      >
-                        <img src={perfilIcon} className="w-4 h-4 drop-shadow-[0_0_5px_rgba(239,68,68,0.8)] relative z-10" alt="Soporte" />
-                        <span className="font-bold text-[11px] uppercase tracking-wider relative z-10">{item.label}</span>
+                      <motion.div whileHover={{ scale: 1.03 }} className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-red-500/30 text-white transition-all duration-300">
+                        <img src={iconobatalla} className="w-4 h-4" alt="Batallas" />
+                        <span className="font-bold text-[11px] uppercase tracking-wider">{item.label}</span>
                       </motion.div>
                     </div>
                   ) : item.isSpecialYellow ? (
                     <div className="gengar-aura-yellow mx-1">
-                      <motion.div
-                        whileHover={{ scale: 1.03 }}
-                        className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-yellow-500/30 text-white transition-all duration-300"
-                      >
-                        <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)] relative z-10" />
-                        <span className="font-bold text-[11px] uppercase tracking-wider relative z-10">{item.label}</span>
+                      <motion.div whileHover={{ scale: 1.03 }} className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-yellow-500/30 text-white transition-all duration-300">
+                        <Trophy className="w-4 h-4 text-yellow-400" />
+                        <span className="font-bold text-[11px] uppercase tracking-wider">{item.label}</span>
                       </motion.div>
                     </div>
                   ) : item.isSpecialBlue ? (
                     <div className="gengar-aura-blue mx-1">
-                      <motion.div
-                        whileHover={{ scale: 1.03 }}
-                        className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-blue-500/30 text-white transition-all duration-300"
-                      >
-                        <Truck className="w-4 h-4 text-blue-400 drop-shadow-[0_0_5px_rgba(59,130,246,0.8)] relative z-10" />
-                        <span className="font-bold text-[11px] uppercase tracking-wider relative z-10">{item.label}</span>
+                      <motion.div whileHover={{ scale: 1.03 }} className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-blue-500/30 text-white transition-all duration-300">
+                        <img src={perfilIcon} className="w-4 h-4" alt="Soporte" />
+                        <span className="font-bold text-[11px] uppercase tracking-wider">{item.label}</span>
+                      </motion.div>
+                    </div>
+                  ) : item.isSpecialGreen ? (
+                    <div className="gengar-aura-green mx-1">
+                      <motion.div whileHover={{ scale: 1.03 }} className="relative px-4 py-2 rounded-xl flex items-center gap-2 overflow-hidden bg-[#131829]/60 backdrop-blur-md border border-green-500/30 text-white transition-all duration-300">
+                        <img src={furgoneta} className="w-4 h-4 object-contain" alt="Envío" />
+                        <span className="font-bold text-[11px] uppercase tracking-wider">{item.label}</span>
                       </motion.div>
                     </div>
                   ) : (
-                    <motion.div
-                      whileHover={{ y: -1 }}
-                      className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 text-xs ${
-                        isActive
-                          ? 'bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] text-black font-black'
-                          : 'text-gray-300 hover:text-white hover:bg-[#131829]'
-                      }`}
-                    >
+                    <motion.div whileHover={{ y: -1 }} className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 text-xs ${isActive ? 'bg-gradient-to-r from-[var(--neon-yellow)] to-[var(--neon-blue)] text-black font-black' : 'text-gray-300 hover:text-white hover:bg-[#131829]'}`}>
                       {item.customIcon ? item.customIcon : <item.icon className="w-4 h-4" />}
                       <span className="truncate uppercase font-bold text-[11px] tracking-wider">{item.label}</span>
                     </motion.div>
