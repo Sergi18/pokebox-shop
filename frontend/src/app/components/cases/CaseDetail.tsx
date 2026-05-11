@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { ArrowLeft, Zap, Star, Gift, Loader2, Info, ChevronRight, ShieldCheck, Sparkles, Box, RefreshCw, X } from 'lucide-react';
+import { ArrowLeft, Zap, Star, Gift, Loader2, Info, ChevronRight, ShieldCheck, Sparkles, Box, RefreshCw, X, Package } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { CaseOpeningModal } from './CaseOpeningModal';
@@ -248,14 +248,21 @@ export function CaseDetail() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 max-w-md">
-              <div className="bg-[#131829] border-2 border-white/5 p-6 rounded-[2rem]">
-                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2 text-center">DROPS DISPONIBLES</div>
-                <div className="text-3xl font-black text-white italic text-center leading-none">{caseItems.length || '--'}</div>
-              </div>
-              <div className="bg-[#131829] border-2 border-white/5 p-6 rounded-[2rem]">
-                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2 text-center">NIVEL REQUERIDO</div>
-                <div className="text-3xl font-black text-[var(--neon-yellow)] italic text-center leading-none">Lv. 1</div>
+            <div className="flex gap-6 max-w-md">
+              <div className="flex-1 bg-gradient-to-br from-[#131829] to-[#1a2238] border-2 border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--neon-blue)]/5 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-[var(--neon-blue)]/10 transition-colors" />
+                <div className="relative flex items-center gap-6">
+                  <div className="w-16 h-16 bg-black/40 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
+                    <Package className="w-8 h-8 text-[var(--neon-blue)] drop-shadow-[0_0_8px_rgba(0,212,255,0.4)]" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Items en Caja</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-black text-white italic leading-none">{caseItems.length || '--'}</span>
+                      <span className="text-[10px] font-black text-[var(--neon-blue)] uppercase italic tracking-widest">Drops</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
