@@ -184,8 +184,13 @@ export function Trade() {
     let items = catalog.filter(i => i.value <= offeredItem.value);
     if (catalogFilter !== 'all') items = items.filter(i => i.rarity === catalogFilter);
     if (catalogSearch) items = items.filter(i => i.name.toLowerCase().includes(catalogSearch.toLowerCase()));
-    return items.sort((a, b) => b.value - a.value);
-  }, [offeredItem, catalog, catalogFilter, catalogSearch]);
+    
+    return [...items].sort((a, b) => {
+      if (sortBy === 'value-asc') return a.value - b.value;
+      if (sortBy === 'value-desc') return b.value - a.value;
+      return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+    });
+  }, [offeredItem, catalog, catalogFilter, catalogSearch, sortBy]);
 
   const handleSelectOffer = (item: Item) => {
     setOfferedItem(item);
@@ -335,6 +340,36 @@ export function Trade() {
                       />
                     </div>
 
+                    <div className="mb-8">
+                      <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Filter className="w-3 h-3" /> Ordenar por Precio
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setSortBy('value-desc')}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border-2 ${
+                            sortBy === 'value-desc'
+                              ? 'bg-[var(--neon-yellow)]/10 border-[var(--neon-yellow)] text-white'
+                              : 'bg-black/20 border-white/5 text-gray-500 hover:border-white/10'
+                          }`}
+                        >
+                          <TrendingUp className="w-4 h-4 mb-1" />
+                          <span className="text-[9px] font-black uppercase italic">Mayor</span>
+                        </button>
+                        <button
+                          onClick={() => setSortBy('value-asc')}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border-2 ${
+                            sortBy === 'value-asc'
+                              ? 'bg-[var(--neon-yellow)]/10 border-[var(--neon-yellow)] text-white'
+                              : 'bg-black/20 border-white/5 text-gray-500 hover:border-white/10'
+                          }`}
+                        >
+                          <TrendingDown className="w-4 h-4 mb-1" />
+                          <span className="text-[9px] font-black uppercase italic">Menor</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div>
                       <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                         <Star className="w-3 h-3" /> Rareza
@@ -450,18 +485,44 @@ export function Trade() {
                         onChange={e => setCatalogSearch(e.target.value)}
                         className="w-full bg-black/40 border-2 border-white/5 focus:border-[var(--neon-blue)] rounded-xl py-3 px-4 text-white font-bold outline-none text-xs"
                       />
-                      <div className="flex flex-wrap gap-2">
-                        {rarityFilters.map(r => (
+                      
+                      <div className="pt-2">
+                        <h4 className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-3">Ordenar Precio</h4>
+                        <div className="grid grid-cols-2 gap-2">
                           <button
-                            key={r}
-                            onClick={() => setCatalogFilter(r)}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase italic border-2 transition-all ${
-                              catalogFilter === r ? 'bg-[var(--neon-blue)] border-[var(--neon-blue)] text-black' : 'bg-black/20 border-white/5 text-gray-500'
+                            onClick={() => setSortBy('value-desc')}
+                            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-[9px] font-black uppercase italic border-2 transition-all ${
+                              sortBy === 'value-desc' ? 'bg-[var(--neon-blue)] border-[var(--neon-blue)] text-black' : 'bg-black/20 border-white/5 text-gray-500'
                             }`}
                           >
-                            {r === 'all' ? 'T' : r.charAt(0)}
+                            <TrendingUp className="w-3 h-3" /> Mayor
                           </button>
-                        ))}
+                          <button
+                            onClick={() => setSortBy('value-asc')}
+                            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-[9px] font-black uppercase italic border-2 transition-all ${
+                              sortBy === 'value-asc' ? 'bg-[var(--neon-blue)] border-[var(--neon-blue)] text-black' : 'bg-black/20 border-white/5 text-gray-500'
+                            }`}
+                          >
+                            <TrendingDown className="w-3 h-3" /> Menor
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <h4 className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-3">Rareza</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {rarityFilters.map(r => (
+                            <button
+                              key={r}
+                              onClick={() => setCatalogFilter(r)}
+                              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase italic border-2 transition-all ${
+                                catalogFilter === r ? 'bg-[var(--neon-blue)] border-[var(--neon-blue)] text-black' : 'bg-black/20 border-white/5 text-gray-500'
+                              }`}
+                            >
+                              {r === 'all' ? 'T' : r.charAt(0)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </Card>
